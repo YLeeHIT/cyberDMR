@@ -19,23 +19,22 @@ def parse_args():
     return parser.parse_args()
 
 
-# 模拟DMR区域的函数
+# Function to simulate DMR (Differentially Methylated Region) regions
 def simulate_dmr_region_with_input_limit(chr_name, region_start, region_end, delta_methylation, max_cpgs=50, density="auto"):
     """
-    模拟一个差异甲基化区域 DMR
+    Simulates a Differentially Methylated Region (DMR)
 
-    参数说明：
-    - chr_name: 染色体名称 如 "chr1"
-    - region_start: 区域起始位置 整数
-    - region_end: 区域终止位置 必须大于起始位置 + 100
-    - delta_methylation: 实验组与对照组的平均甲基化水平差值（可正可负）
-    - max_cpgs: 区域中最多CpG数量 超过则提前终止, 默认50
-
-    返回：
-    一个字典 包括区域信息、CpG位点、两组甲基化值及平均差值
+    Parameters:
+    - chr_name: Chromosome name, e.g., "chr1"
+    - region_start: The start position of the region (integer)
+    - region_end: The end position of the region (must be greater than region_start + 100)
+    - delta_methylation: The mean methylation level difference between the experimental and control groups (can be positive or negative)
+    - max_cpgs: Maximum number of CpGs within the region. If this limit is exceeded, generation may terminate early (default is 50)
+    Returns:
+     A dictionary containing information about the simulated DMR, including region details, CpG site positions, methylation values for the two groups, and the mean methylation difference
     """
 
-    # 定义每两个CpG之间的最小和最大间隔（单位：bp）
+    # Define the minimum and maximum interval (unit: bp) between every two CpGs
     if density == "dense":
         min_distance = 2
         max_distance = 50
@@ -46,69 +45,68 @@ def simulate_dmr_region_with_input_limit(chr_name, region_start, region_end, del
         min_distance = 2
         max_distance = 499
 
-    # 区域长度校验
+    # Region length validation
     if region_end - region_start < 100:
-        #raise ValueError("区域长度必须大于100bp")
         return None
 
-    # 生成CpG位点位置
+    # Generate CpG site positions
     cpg_sites = []
     pos = region_start
     while pos < region_end:
         if len(cpg_sites) >= max_cpgs:
-            break  # 超过最大数量限制，提前终止
+            break  # If the maximum number limit is exceeded, terminate early
 
         if len(cpg_sites) > 0:
             max_gap = min(max_distance, region_end - pos)
             if max_gap < min_distance:
-                break  # 剩余距离太小，无法添加新的CpG
+                break  # If the maximum number limit is exceeded, terminate early
             gap = random.randint(min_distance, max_gap)
         else:
-            gap = 0  # 第一个CpG使用起始位置
+            gap = 0  # The first CpG uses the starting position
         pos += gap
         if pos < region_end:
             cpg_sites.append(pos)
 
     if len(cpg_sites) == 0:
-        #raise ValueError("无法在给定区域内放置CpG位点，请检查起始和终止位置。")
+        #raise ValueError("Cannot place CpG sites within the given region. Please check the start and end positions")
         return None
 
-    # 如果因超过最大数量提前终止，则更新终止位置
+    # If terminated early due to exceeding the maximum number, update the end position
     region_end_final = min(region_end, cpg_sites[-1])
     region_length = region_end_final - region_start
 
-    # 判断是否满足三个前置条件
+    # Check if three preconditions are met
     if len(cpg_sites) < 5 or region_length < 100 or abs(delta_methylation) < 0.1:
         return None
 
-    # 设置甲基化水平的均值（使用 beta 分布模拟）
+    # Set the mean methylation level (simulated using a beta distribution)
     mean_control = np.random.uniform(0.2, 0.8)
     delta_methylation_modify = round(np.random.normal(loc=delta_methylation, scale=0.01), 3)
     mean_treatment = mean_control + delta_methylation_modify
 
-    # 防止mean_treatment 超过阈值
+    # Prevent mean_treatment from exceeding the threshold
     mean_treatment = min(max(mean_treatment, 0.001), 0.999)
 
-    # 设置beta分布的形状参数（固定精度）
+    # Set the shape parameters for the beta distribution (fixed precision)
     precision = 20
     alpha_control = mean_control * precision
     beta_control = (1 - mean_control) * precision
     alpha_treatment = mean_treatment * precision
     beta_treatment = (1 - mean_treatment) * precision
 
-    # 生成甲基化值序列（四舍五入保留三位小数）
+    # Generate a sequence of methylation values (rounded to three decimal places)
     control_vals = beta.rvs(alpha_control, beta_control, size=len(cpg_sites)).round(3)
     treatment_vals = beta.rvs(alpha_treatment, beta_treatment, size=len(cpg_sites)).round(3)
 
-    # 进行一遍一致性校验
+    # Perform a consistency check
     delta_vals = treatment_vals - control_vals
     if (delta_methylation > 0 and np.any(delta_vals < 0)) or (delta_methylation < 0 and np.any(delta_vals > 0)):
         return None
 
-    # 实际计算平均甲基化差值
+    # Actually calculate the mean methylation difference
     actual_delta = round(np.mean(treatment_vals) - np.mean(control_vals), 3)
 
-    # 返回模拟结果
+    # Return the simulation result
     return {
         "chr": chr_name,
         "start": region_start,
@@ -120,25 +118,25 @@ def simulate_dmr_region_with_input_limit(chr_name, region_start, region_end, del
         "mean_delta_methylation": actual_delta
     }
 
-# 定义 non-DMR 区域模拟函数
+# Define a simulation function for non-DMR regions
 def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation=None, max_cpgs=50, density="auto"):
     """
-    模拟一个 non-DMR 区域（非差异甲基化区域）
+    Simulates a non-DMR (Non-Differentially Methylated Region)
 
-    条件：
-    - CpG数量 < 5 或 delta_methylation < 0.1,（可以人为设置或随机生成）
+    Conditions:
+    - CpG count is less than 5 or delta_methylation (the difference in methylation levels) is less than 0.1
 
-    参数：
-    - chr_name: 染色体名
-    - region_start: 起始位置
-    - region_end: 终止位置
-    - delta_methylation: 可选，实验与对照组甲基化差值，若不提供则自动生成一个 < 0.1 的差值
-    - max_cpgs: 最大 CpG 数量（用于控制生成数量）
+    Parameters:
+    - chr_name: Chromosome name
+    - region_start: Start position of the regio
+    - region_end: End position of the region
+    - delta_methylation: (optional) The methylation difference between experimental and control groups. If not provided, a value less than 0.1 will be automatically generated to ensure non-DMR status.
+    - max_cpgs: Maximum number of CpGs to generate within the region (this can be used to control the CpG count, e.g., to keep it below 5 for non-DMR simulation)
 
-    返回：
-    模拟的 non-DMR 信息字典
+    Returns:
+    A dictionary containing information about the simulated non-DMR 
     """
-    # 定义每两个CpG之间的最小和最大间隔（单位：bp）
+    # Define the minimum and maximum interval (unit: bp) between every two CpGs
     if density == "dense":
         min_distance = 2
         max_distance = 50
@@ -149,13 +147,13 @@ def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation
         min_distance = 2
         max_distance = 499
 
-    # 如果未指定差值，随机生成一个在 [-0.05, 0.05] 的差值
+    # If the difference value is not specified, randomly generate one in the range [-0.05, 0.05]
     if delta_methylation is None:
         delta_methylation = np.round(np.random.uniform(-0.02, 0.02), 3)
 
     else:
         delta_methylation = np.round(np.random.uniform(-abs(delta_methylation), abs(delta_methylation)), 3)
-    # 决定 CpG 数量：可以让其小于5，也可以大于5但差值小于0.1
+    # Determine the CpG count: it can be less than 5, or greater than 5 if the difference value is less than 0.1
     allow_large_cpg = np.random.choice([True, False])
 
     cpg_sites = []
@@ -164,7 +162,7 @@ def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation
         if len(cpg_sites) >= max_cpgs:
             break
         if not allow_large_cpg and len(cpg_sites) >= 4:
-            break  # 控制 CpG 数小于 5
+            break  # Control the CpG count to be less than 5
 
         if len(cpg_sites) > 0:
             max_gap = min(max_distance, region_end - pos)
@@ -186,7 +184,7 @@ def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation
     delta_methylation_modify = round(np.random.normal(loc=delta_methylation, scale=0.01), 3)
     mean_treatment = mean_control + delta_methylation_modify
     
-    # 防止mean_treatment 超过阈值
+    # Prevent mean_treatment from exceeding the threshold.
     mean_treatment = min(max(mean_treatment, 0.001), 0.999)
 
     precision = 20
@@ -200,7 +198,7 @@ def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation
 
     actual_delta = round(np.mean(treatment_vals) - np.mean(control_vals), 3)
 
-    # 防止波动模拟出真的DMR
+    # c
     if actual_delta > 0.1 or actual_delta < -0.1:
         return None
 
@@ -215,14 +213,14 @@ def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation
         "mean_delta_methylation": actual_delta
     }
 
-# 模拟不一致DMR
+# Simulate inconsistent DMRs
 def simulate_dmr_with_inconsistent_points(chr_name, region_start, region_end, delta_methylation, max_cpgs=50, density="auto"):
     """
-    模拟一个带有最大程度扰动的不一致DMR。
-    每隔4个CpG插入一个方向相反的点 ，无视原始方向 ，强制打乱方向一致性。
+    Simulates an inconsistent DMR (Differentially Methylated Region) with maximal perturbation
+    A point with a reversed methylation difference direction is inserted every 4 CpGs. This is done regardless of the original direction at these specific CpG sites, thereby forcibly disrupting overall directional consistency.
 
-    返回：
-    包含不一致点扰动后的DMR结构 （插入位置不判断方向）。
+    Returns:
+    The DMR structure after perturbation with these inconsistent points. (Note: The original direction at the insertion points is not considered when the 'opposite direction' is enforced.)
     """
 
     dmr = simulate_dmr_region_with_input_limit(
@@ -237,46 +235,46 @@ def simulate_dmr_with_inconsistent_points(chr_name, region_start, region_end, de
     if dmr is None:
         return None
 
-    # 每隔4个点插入一个扰动点（例如 3, 7, 11, ...）
+    # Insert a perturbation point every 4 points (e.g., at indices/positions 3, 7, 11, ...)
     indices = list(range(3, len(dmr["CpG_sites"]), 4))
 
     for idx in indices:
-        # 交换 control 和 treatment 值，制造“方向反转”
+        # Swap control and treatment values to create a 'direction reversal'
         dmr["methylation_control"][idx], dmr["methylation_treatment"][idx] = dmr["methylation_treatment"][idx], dmr["methylation_control"][idx]
 
-    # 更新整体平均差值
+    # Update the overall mean difference
     control_arr = np.array(dmr["methylation_control"])
     treatment_arr = np.array(dmr["methylation_treatment"])
     dmr["mean_delta_methylation"] = round(np.mean(treatment_arr - control_arr), 3)
 
     return dmr
 
-# 模拟不一致DMR，但是再此基础上可以拆分为子subDMR
+# Simulate inconsistent DMRs, which can then be further split into sub-DMRs based on this
 def simulate_dmr_with_subdmr_points(chr_name, region_start, region_end, delta_methylation, max_cpgs=50):
     """
-    模拟一个带有不一致点的 DMR 区域
+    Simulates a DMR (Differentially Methylated Region) that includes inconsistent points
 
-    参数与原函数相同，额外行为：
-    - 在生成好的 DMR 区域中，随机插入 1-3 个不一致点, control 与 treatment 方向相反
+    Parameters are the same as those of the base/original DMR simulation function, with the following additional behavior:
+    - Within the generated DMR region, 1-3 inconsistent points are randomly inserted. At these points, the direction of the methylation difference between 'control' and 'treatment' is opposite to that of the overall DMR
 
-    返回：
-    与 DMR 模拟函数相同结构的字典
+    Returns:
+    A dictionary with the same structure as that returned by the standard/original DMR simulation function
     """
     
-    # 检查是否可以把不一致的拆分为子DMR
+    # Check if the inconsistent DMRs can be split into sub-DMRs
     def check_split_subdmrs(dmr, flip_indices):
 
         n_cpgs = len(dmr["CpG_sites"])
         if n_cpgs == 0:
             return None
 
-        # 排序并构建切割点
+        # Sort and construct cutting points (or split points)
         split_points = sorted(set(flip_indices))
         segments = []
         start = 0
         for cut in split_points:
             if start < cut:
-                segments.append(range(start, cut))  # 不包含 cut 点
+                segments.append(range(start, cut))  # Does not include cut points
             start = cut + 1
         if start < n_cpgs:
             segments.append(range(start, n_cpgs))
@@ -285,13 +283,13 @@ def simulate_dmr_with_subdmr_points(chr_name, region_start, region_end, delta_me
 
         for segment in segments:
             if len(segment) < 5:
-                continue  # CpG数量不足
+                continue  # Insufficient CpG count
 
             idx_list = list(segment)
             start_pos = dmr["CpG_sites"][idx_list[0]]
             end_pos = dmr["CpG_sites"][idx_list[-1]]
             if end_pos - start_pos < 50:
-                continue  # 长度不足
+                continue  # Insufficient length
 
             control = np.array(dmr["methylation_control"])[idx_list]
             treatment = np.array(dmr["methylation_treatment"])[idx_list]
@@ -311,7 +309,7 @@ def simulate_dmr_with_subdmr_points(chr_name, region_start, region_end, delta_me
 
         return sub_dmrs if sub_dmrs else None
 
-    # 调用原始 DMR 函数
+    # Call the original DMR function
     dmr = simulate_dmr_region_with_input_limit(
         chr_name=chr_name,
         region_start=region_start,
@@ -321,39 +319,39 @@ def simulate_dmr_with_subdmr_points(chr_name, region_start, region_end, delta_me
     )
 
     if dmr is None:
-        return None  # 模拟失败直接返回
+        return None  # If simulation fails, return directly
 
-    # 判断差值方向：是 control 大还是 treatment 大
+    # Determine the direction of the difference: whether control is greater or treatment is greater
     direction = np.sign(dmr["mean_delta_methylation"])
 
-    # 如果方向为 0（差值极小），则跳过插入
+    # If the direction is 0 (i.e., difference is negligible), skip insertion
     if direction == 0:
         return None
 
-    # 决定要插入的不一致点数量（1～3）
+    # Decide the number of inconsistent points to insert (1 to 3)
     n_flip = min(len(dmr["CpG_sites"]), random.randint(1, 3))
 
-    # 随机选出索引来插入不一致点
+    # Randomly select indices to insert inconsistent points
     indices = random.sample(range(len(dmr["CpG_sites"])), k=n_flip)
 
-    # 交换 selected 点的 control 和 treatment 值，使其“方向相反”
+    # Swap control and treatment values for the selected points, making their 'direction opposite'
     for idx in indices:
         c_val = dmr["methylation_control"][idx]
         t_val = dmr["methylation_treatment"][idx]
         if (direction > 0 and c_val > t_val) or (direction < 0 and c_val < t_val):
-            # 仅在同向情况下才交换，使之变为“不一致”
+            # Swap only if they originally have the same direction, to make them 'inconsistent'
             dmr["methylation_control"][idx], dmr["methylation_treatment"][idx] = t_val, c_val
 
-    # 更新整体平均差值（方便校验）
+    # Update the overall mean difference (for easier validation)
     control_arr = np.array(dmr["methylation_control"])
     treatment_arr = np.array(dmr["methylation_treatment"])
     dmr["mean_delta_methylation"] = round(np.mean(treatment_arr - control_arr), 3)
 
-    # 检查是否形成子DMR
+    # Check if sub-DMRs are formed
     return check_split_subdmrs(dmr, indices)
 
 
-# 工具函数：从 mean 和 std 推出 beta 分布的 alpha, beta 参数
+# Utility function: Derive alpha and beta parameters for a beta distribution from mean and std (standard deviation)
 def beta_params_from_mean_std(mean, std):
     mean = np.clip(mean, 1e-3, 1 - 1e-3)
     var = std ** 2
@@ -363,7 +361,7 @@ def beta_params_from_mean_std(mean, std):
     return max(alpha, 1e-3), max(beta_, 1e-3)
 
 
-# 带缺失控制的样本展开函数
+# Sample expansion function with missing value control
 def simulate_group_samples_with_missing(
     dmr,
     n_control: int,
@@ -403,10 +401,9 @@ def simulate_group_samples_with_missing(
                 if is_missing_sample:
                     continue
                 
-                # 采用beta分布
+                # Use beta distribution
                 coverage = int(np.clip(np.random.normal(coverage_mean, coverage_std), 1, 100))
                 mean_meth = meth_values[idx]
-                #sample_meth = np.clip(np.random.normal(loc=mean_meth, scale=group_std), 0, 1)
                 alpha, beta_ = beta_params_from_mean_std(mean_meth, group_std)
                 sample_meth = beta.rvs(alpha, beta_)
 
@@ -429,7 +426,7 @@ def simulate_group_samples_with_missing(
     }
 
 
-# 更新后的验证函数，增加滑窗子区域均值判断逻辑
+# Updated validation function, adding logic to assess mean values of sliding window sub-regions
 def validate_nondmr_from_samples(cpg_sites, all_samples, n_control, n_treatment,
                                   delta_threshold=0.1, max_consecutive=3, window_size=5):
     site_index = {pos: idx for idx, pos in enumerate(cpg_sites)}
@@ -456,7 +453,7 @@ def validate_nondmr_from_samples(cpg_sites, all_samples, n_control, n_treatment,
             delta = 0
         deltas.append(delta)
 
-    # 1. 检查连续超标个数
+    # 1. Check the number of consecutive out-of-bounds/limit-exceeding occurrences
     consecutive = 0
     max_consec = 0
     over_threshold_count = 0
@@ -471,7 +468,7 @@ def validate_nondmr_from_samples(cpg_sites, all_samples, n_control, n_treatment,
     too_many_consecutive = max_consec > max_consecutive
     too_many_total = over_threshold_count > len(cpg_sites) / 2
 
-    # 2. 滑动窗口检查子区域均值差值
+    # 2. Check the mean difference of sub-regions using a sliding window
     found_dmr_window = False
     for i in range(len(deltas) - window_size + 1):
         window = deltas[i:i + window_size]
@@ -629,7 +626,7 @@ def get_random_density(density, dense_ratio):
         print(f"[Warning] Unknown density mode '{density}', fallback to 'auto'.")
         return "auto"
 
-# 随机打乱生成顺序 + 修正分类输出 + 分类插入标签
+# Randomly shuffle generation order + correct classification output + insert labels by category
 def simulate_mixed_regions_randomized(
     total_dmr: int,
     mean_delta: float,
@@ -655,14 +652,14 @@ def simulate_mixed_regions_randomized(
     random.seed(seed)
     os.makedirs(output_dir, exist_ok=True)
 
-    # 计算各类区域数量
+    # Calculate the number of regions for each type
     dmr_count = int(total_dmr * dmr_per)
     dmr_notable_count = int(total_dmr * dmr_notable_per)
     dmr_inconsistent_count = int(total_dmr * dmr_inconsis_per)
     dmr_inconsistent_subdmr_count = int(total_dmr * dmr_sub_per)
     nondmr_count = total_dmr - dmr_count - dmr_inconsistent_count - dmr_notable_count - dmr_inconsistent_subdmr_count
 
-    # 构建任务列表（打标签）
+    # Construct a task list (for labeling/tagging)
     tasks = (
         ["non-DMR"] * nondmr_count +
         ["good-DMR"] * dmr_count +
@@ -683,9 +680,9 @@ def simulate_mixed_regions_randomized(
         region_length = int(np.random.normal(loc=length_mean, scale=length_std))
         region_length = max(100, region_length)
         end = pos + region_length
-        #end = pos + random.randint(200, 2000)
+        
 
-        # 产生一些付的delta，80%概率保持原值（正数），20%概率原值取反（负数）
+        # Generate some negative deltas: 80% probability to keep the original value (positive), 20% probability to negate the original value (making it negative)
         sign = 1 if random.random() < 0.8 else -1
 
         if task == "non-DMR":
@@ -709,7 +706,7 @@ def simulate_mixed_regions_randomized(
             group_std = 0.03
 
         if region:
-            if isinstance(region, list):  # 说明是 sub-DMR 情况
+            if isinstance(region, list):  # Indicate that it is a sub-DMR scenario
                 for sub_region in region:
                     sub_region["category"] = task
                     regions.append(sub_region)
@@ -760,7 +757,7 @@ def simulate_mixed_regions_randomized(
         
             pos = advance_position(end)
         
-     # 整理输出
+     # Organize the output
     rows = []
     for region in regions:
         rows.append({
@@ -825,7 +822,7 @@ def main():
 
     args = parser.parse_args()
 
-    # 调用模拟函数
+    # Call the simulation function
     df = simulate_mixed_regions_randomized(
         total_dmr=args.total_dmr,
         mean_delta=args.mean_delta,
@@ -851,22 +848,6 @@ def main():
     print("Simulation completed.")
     df.to_csv(f"{args.output_dir}/DMRs.txt",sep="\t",header=True,index=False)
 
-# 主逻辑入口
+# Main logic entry point
 if __name__ == "__main__":
-    #args = parse_args()
-    #output_dir = args.output_dir
-    #seed = 42
-    #result = simulate_mixed_regions_randomized(
-    #    total_dmr=2000,
-    #    mean_delta=0.3,
-    #    n_control=10,
-    #    n_treatment=10,
-    #    coverage_mean=30,
-    #    coverage_std=5,
-    #    length_mean=2000,
-    #    length_std=300,
-    #    output_dir=output_dir,
-    #    density="dense"
-    #)
-    #result.to_csv(f"{output_dir}/DMRs.txt",sep="\t",header=True,index=False)
     main()

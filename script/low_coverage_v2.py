@@ -6,46 +6,46 @@ from sklearn.impute import KNNImputer
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict
 
-# 预生成80%固定的位点（假设全基因组有100万个碱基）
+# Pre-generate 80% of sites as fixed positions (assuming the entire genome consists of 1 million bases)
 BASE_CPG_SITES = np.sort(np.random.randint(1, 1_000_000, size=800))  # 80%固定位点
 
 def generate_methylation_data(chr_name="chr1", num_points=1000, coverage_range=(1, 20), meth_range=(0, 1)):
     """
-    生成模拟的 CpG 甲基化数据，保证 80% 位点固定 20% 位点随机变动。
+    Generate simulated CpG methylation data, ensuring 80% of sites are fixed and 20% of sites vary randomly
     
-    参数：
-    - chr_name: 染色体名称
-    - num_points: 总共要生成的CpG位点数量
-    - coverage_range: (min_coverage, max_coverage) 覆盖度的范围
-    - meth_range: (min_meth, max_meth) 甲基化水平的范围
+    Parameters：
+    - chr_name: Chromosome name
+    - num_points:  Total number of CpG sites to generate
+    - coverage_range: Tuple specifying the range for coverage, as (min_coverage, max_coverage)
+    - meth_range: Tuple specifying the range for methylation level, as (min_meth, max_meth)
 
-    返回：
-    - pandas DataFrame 包含 Chr, Pos, Meth_Level, Coverage
+    Returns：
+    - pandas DataFrame:A DataFrame with columns: 'Chr', 'Pos', 'Meth_Level', 'Coverage'
     """
-    np.random.seed()  # 确保每次调用产生不同随机数据
+    np.random.seed()  # Ensure each call produces different random data
 
-    # 计算 80% 和 20% 的位点数量
+    # Calculate the number of sites for the 80% and 20% portions
     num_fixed = int(num_points * 0.8)
     num_random = num_points - num_fixed
 
-    # 1. **80% 固定位点**（从预生成的 BASE_CPG_SITES 里选取）
+    # 1. **80% fixed sites**（selected from the pre-generated BASE_CPG_SITES）
     fixed_positions = np.random.choice(BASE_CPG_SITES, num_fixed, replace=False)
 
-    # 2. **20% 随机生成的位点**
+    # 2. **20% randomly generated sites**
     random_positions = np.random.randint(1, 1_000_000, size=num_random)
 
-    # 3. **合并并排序**
+    # 3. **Merge and sort**
     all_positions = np.sort(np.concatenate([fixed_positions, random_positions]))
 
-    # 4. **生成随机甲基化水平**
+    # 4. **Generate random methylation levels**
     meth_levels = np.random.uniform(meth_range[0], meth_range[1], size=num_points)
 
-    # 5. **生成覆盖度（Gamma 分布模拟）**
-    shape, scale = 2, 5  # Gamma 分布参数，右偏分布模拟实际测序深度
+    # 5. **Generate coverage (simulated using a Gamma distribution)**
+    shape, scale = 2, 5  # Gamma distribution parameters; a right-skewed distribution to simulate actual sequencing depth
     coverage = np.random.gamma(shape, scale, size=num_points).astype(int)
-    coverage = np.clip(coverage, coverage_range[0], coverage_range[1])  # 限制覆盖度范围
+    coverage = np.clip(coverage, coverage_range[0], coverage_range[1])  # Limit the coverage range
 
-    # 6. **组装 DataFrame**
+    # 6. **Assemble DataFrame**
     df = pd.DataFrame({
         "Chr": [chr_name] * num_points,
         "Pos": all_positions,
@@ -57,22 +57,21 @@ def generate_methylation_data(chr_name="chr1", num_points=1000, coverage_range=(
 
 def simulate_multiple_samples(output_folder, group1_count=5, group2_count=5, chr_name="chr1", num_points=1000):
     """
-    生成多个样本的 CpG 甲基化数据，并按 group1/group2 组织，保存为文件。
+    Generates CpG methylation data for multiple samples, organizes them by group1 and group2, and saves the data to a file
 
     参数：
-    - group1_count: group1 的样本数
-    - group2_count: group2 的样本数
-    - chr_name: 染色体名
-    - num_points: 每个样本的数据点数
+    - group1_count: The number of samples in group1
+    - group2_count: The number of samples in group2
+    - chr_name: The chromosome name
+    - num_points: The number of data points to generate per sample
 
     返回：
-    - List[Dict] 格式，每个样本包含 sample, group, data
+    - List[Dict] A list of dictionaries. Each dictionary represents a sample and contains keys: 'sample' (sample identifier), 'group' (group identifier), and 'data' (the corresponding CpG methylation data)
     """
     samples = []
-    #output_folder = "/home/ly/shell/deepDMR/data/simulate_sample_data/raw"
     os.makedirs(output_folder, exist_ok=True)
 
-    sample_index = 1 # 全局编号
+    sample_index = 1 # Global ID
     inlab_records = []
 
     for i in range(group1_count):
@@ -103,7 +102,7 @@ def simulate_multiple_samples(output_folder, group1_count=5, group2_count=5, chr
         sample_index += 1
         inlab_records.append(f"{sample_name}\t{group}\t{sample_path}")
 
-    # 写出 inlab.txt 文件
+    # Write out the inlab.txt file
     inlab_path = os.path.join(output_folder, "inlab.txt")
     with open(inlab_path, 'w') as f:
         f.write("\n".join(inlab_records))
@@ -112,21 +111,21 @@ def simulate_multiple_samples(output_folder, group1_count=5, group2_count=5, chr
 
     return samples
 
-# knn + 加权方式
+# KNN + weighting method
 def fill_low_coverage_cpg_knn(df, coverage_threshold=5, n_neighbors=3):
     """
-    对低覆盖 CpG 位点进行 KNN 插值 + 加权融合。
+    Performs k-Nearest Neighbors (KNN) imputation combined with weighted fusion on low-coverage CpG sites
 
-    参数：
-        - df: 包含 "Chr", "Pos", "Meth_Level", "Coverage" 的 DataFrame
-        - coverage_threshold: 低覆盖度定义的阈值
-        - n_neighbors: KNN 的近邻数
+    Parameters：
+        - df:  Input DataFrame containing the columns 'Chr', 'Pos', 'Meth_Level', and 'Coverage'
+        - coverage_threshold: The threshold for defining low coverage
+        - n_neighbors: The number of nearest neighbors for KNN
 
-    返回：
-        - 新增 "Final_Meth_Level" 的 DataFrame
+    Returns：
+        - pandas.DataFrame: The input DataFrame with an added 'Final_Meth_Level' column, representing the imputed/fused methylation levels
     """
     if df.empty or df["Meth_Level"].dropna().empty:
-        # 空表或Meth level 全为空
+        # Empty table or the 'Meth_Level' column is entirely empty/null
         df = df.copy()
         df["Final_Meth_Level"] = pd.Series(dtype=float)
         df["Weight"] = pd.Series(dtype=int)
@@ -134,48 +133,47 @@ def fill_low_coverage_cpg_knn(df, coverage_threshold=5, n_neighbors=3):
 
     df = df.copy()
     print(df)
-    # 确保数值列为 float 类型
+    # Ensure numerical columns are of float type
     df["Coverage"] = pd.to_numeric(df["Coverage"], errors="coerce")
     df["Meth_Level"] = pd.to_numeric(df["Meth_Level"], errors="coerce")
 
-    # 生成插值版本
+    # Generate an imputed version
     df_knn = df.copy()
     low_cov_mask = df["Coverage"] < coverage_threshold
     print(low_cov_mask)
-    #df_knn.loc[low_cov_mask, "Meth_Level"] = np.nan # 设置低覆盖为缺失
     print(df_knn)
-    # KNN 插补
+    # KNN imputation
     imputer = KNNImputer(n_neighbors=n_neighbors)
     df["Meth_Level_KNN"] = imputer.fit_transform(df_knn[["Meth_Level"]])
 
-    # 融合插补值与原始值
+    # Merge imputed values and original values
     df["Weight"] = np.clip(df["Coverage"] / coverage_threshold, 0, 1)
     df["Final_Meth_Level"] = (
         df["Weight"] * df["Meth_Level"] + (1 - df["Weight"]) * df["Meth_Level_KNN"]
     )
 
-    # 限制在 0~1 范围
+    # Limit to the 0-1 range
     df["Final_Meth_Level"] = df["Final_Meth_Level"].clip(0, 1)
     print(df)
     return df
 
-# 采用距离 + 加权方式
+# Adopt a distance + weighting method
 def fill_low_coverage_cpg(df, coverage_threshold=5, max_distance=500):
     """
-    使用距离加权平均 + 当前值加权融合，对低覆盖 CpG 位点进行平滑填补。
+    Smoothly imputes low-coverage CpG sites using a combination of a distance-weighted average (from neighbors) and weighted fusion with the site's current value
 
-    参数：
-    - df: DataFrame，包含 ['Chr', 'Pos', 'Meth_Level', 'Coverage']
-    - coverage_threshold: 低覆盖度的定义阈值
-    - max_distance: 限制最大邻居距离
+    Parameters:
+    - df: DataFrame: Input DataFrame containing the columns 'Chr', 'Pos', 'Meth_Level', and 'Coverage'
+    - coverage_threshold: The threshold used to define low coverage
+    - max_distance: The maximum distance to consider for neighbors
 
-    返回：
-    - df: 添加 'Final_Meth_Level' 列，融合当前值与邻居预测值
+    Returns:
+    - pandas.DataFrame: The input DataFrame with an added 'Final_Meth_Level' column. This column's values are the result of fusing the original (current) methylation level with a predicted level derived from its neighbors
     """
     df = df.copy()
     df = df.sort_values("Pos").reset_index(drop=True)
 
-    # 类型转换
+    # Type conversion
     df["Coverage"] = pd.to_numeric(df["Coverage"], errors="coerce")
     df["Meth_Level"] = pd.to_numeric(df["Meth_Level"], errors="coerce")
     df["Pos"] = pd.to_numeric(df["Pos"], errors="coerce")
@@ -188,14 +186,14 @@ def fill_low_coverage_cpg(df, coverage_threshold=5, max_distance=500):
         beta_i = df.at[i, "Meth_Level"]
 
         if pd.isna(beta_i):
-            continue  # 真缺失，跳过（你可以加专门策略处理）
+            continue  # Truly missing, skip (you can add a dedicated strategy for handling)
 
         if coverage >= coverage_threshold:
-            continue  # 高覆盖保留原始值
+            continue  # For high coverage, retain the original value
 
         pos_i = df.at[i, "Pos"]
 
-        # 找前后邻居
+        # Find preceding and succeeding neighbors
         prev = next((j for j in range(i - 1, -1, -1)
                      if pd.notna(df.at[j, "Meth_Level"])), None)
         next_ = next((j for j in range(i + 1, len(df))
@@ -203,43 +201,43 @@ def fill_low_coverage_cpg(df, coverage_threshold=5, max_distance=500):
 
         if prev is None or next_ is None:
             rows_to_drop.append(i)
-            continue  # 缺一边，不插值
+            continue  # If one side (of neighbors) is missing, do not impute
 
-        # 距离计算
+        # Distance calculation
         d1 = abs(pos_i - df.at[prev, "Pos"])
         d2 = abs(df.at[next_, "Pos"] - pos_i)
 
         if d1 > max_distance or d2 > max_distance:
-            rows_to_drop.append(i)  # 距离大后续没有可能加入到计算当中
-            continue  # 超距离
+            rows_to_drop.append(i)  # If the distance is large, it will not be included in subsequent calculations
+            continue  # Exceeds distance limit
 
-        # 邻居值
+        # Neighbor value
         beta1 = df.at[prev, "Meth_Level"]
         beta2 = df.at[next_, "Meth_Level"]
         beta_hat = (beta1 / d1 + beta2 / d2) / (1/d1 + 1/d2)
 
-        # 融合当前值
+        # Fuse with the current value
         w = min(1.0, coverage / coverage_threshold)
         beta_final = w * beta_i + (1 - w) * beta_hat
 
         df.at[i, "Final_Meth_Level"] = np.clip(beta_final, 0, 1)
 
-    # 删除无法插补的行
+    # Delete rows that cannot be imputed
     df = df.drop(index=rows_to_drop).reset_index(drop=True)
     return df
 
-# 提速
+# Speed up
 def fill_low_coverage_cpg_fast(df, coverage_threshold=5, max_distance=500):
     """
-    对无缺失值的 CpG 数据，使用 GIMMEcpg 邻居加权插值（极致优化版）
+    For CpG data that has no missing values, this function applies GIMMEcpg neighbor weighted imputation (highly optimized version)
 
-    参数：
-    - df: 包含 ['Chr', 'Pos', 'Meth_Level', 'Coverage']
-    - coverage_threshold: Coverage 阈值
-    - max_distance: 最大插值范围
+    Parameters:
+    - df: Input DataFrame containing the columns 'Chr', 'Pos', 'Meth_Level', and 'Coverage'
+    - coverage_threshold: The coverage threshold
+    - max_distance: The maximum distance to consider for neighbors during imputation
 
-    返回：
-    - 添加 'Final_Meth_Level' 的 DataFrame，低覆盖无法插值的行将被删除
+    Returns:
+    - The DataFrame with an added 'Final_Meth_Level' column. Rows with low coverage that could not be imputed will have been deleted
     """
     df = df.copy()
     df = df.sort_values("Pos").reset_index(drop=True)
@@ -260,11 +258,11 @@ def fill_low_coverage_cpg_fast(df, coverage_threshold=5, max_distance=500):
         beta_i = meth_arr[i]
 
         if coverage >= coverage_threshold:
-            continue  # 高覆盖不处理
+            continue  # High coverage: do not process
 
         pos_i = pos_arr[i]
 
-        # 找前一个点（i-1）
+        # Find the previous point (i-1)
         prev = i - 1 if i > 0 else -1
         next_ = i + 1 if i < len(df) - 1 else -1
 
@@ -279,11 +277,11 @@ def fill_low_coverage_cpg_fast(df, coverage_threshold=5, max_distance=500):
             rows_to_drop.append(i)
             continue
 
-        # 插值
+        # Interpolate
         beta1 = meth_arr[prev]
         beta2 = meth_arr[next_]
 
-        # 避免除以 0
+        # Avoid division by zero
         if d1 == 0 and d2 == 0:
             rows_to_drop.append(i)
             continue
@@ -294,7 +292,7 @@ def fill_low_coverage_cpg_fast(df, coverage_threshold=5, max_distance=500):
         else:
             beta_hat = (beta1 / d1 + beta2 / d2) / (1 / d1 + 1 / d2)
 
-        # 融合当前值
+        # Fuse with the current value
         w = min(1.0, coverage / coverage_threshold)
         beta_final = w * beta_i + (1 - w) * beta_hat
         df.at[i, "Final_Meth_Level"] = np.clip(beta_final, 0, 1)
@@ -313,11 +311,11 @@ def _fill_low_cov_numba(pos_arr, meth_arr, coverage_arr, threshold, max_dist):
         beta_i = meth_arr[i]
 
         if cov >= threshold:
-            continue  # 高覆盖不处理
+            continue  # High coverage: do not process
 
         pos_i = pos_arr[i]
 
-        # 相邻两个点
+        # Two adjacent points
         prev = i - 1 if i > 0 else -1
         next_ = i + 1 if i < n - 1 else -1
 
@@ -335,7 +333,7 @@ def _fill_low_cov_numba(pos_arr, meth_arr, coverage_arr, threshold, max_dist):
         beta1 = meth_arr[prev]
         beta2 = meth_arr[next_]
 
-        # 距离为 0 时的容错处理
+        # Error handling when distance is zero
         if d1 == 0 and d2 == 0:
             drop_mask[i] = True
             continue
@@ -346,7 +344,7 @@ def _fill_low_cov_numba(pos_arr, meth_arr, coverage_arr, threshold, max_dist):
         else:
             beta_hat = (beta1 / d1 + beta2 / d2) / (1 / d1 + 1 / d2)
 
-        # 权重融合原始值
+        # Weighted fusion of original values
         w = min(1.0, cov / threshold)
         beta_final = w * beta_i + (1 - w) * beta_hat
         final_arr[i] = min(max(beta_final, 0), 1)
@@ -355,20 +353,20 @@ def _fill_low_cov_numba(pos_arr, meth_arr, coverage_arr, threshold, max_dist):
 
 def fill_low_coverage_cpg_numba(df, coverage_threshold=5, max_distance=500):
     """
-    使用 Numba 加速的 GIMMEcpg 插补算法（无缺失假设），适合大规模数据
+    A GIMMEcpg imputation algorithm accelerated with Numba(operates under a 'no missing values' assumption for the input data), suitable for large-scale data
 
-    参数：
-    - df: 包含 'Pos', 'Meth_Level', 'Coverage' 的 DataFrame
-    - coverage_threshold: 低覆盖定义阈值
-    - max_distance: 可接受的邻居最大距离
+    Parameters:
+    - df: Input DataFrame containing 'Pos', 'Meth_Level', and 'Coverage' columns
+    - coverage_threshold: Threshold defining low coverage 
+    - max_distance: Maximum acceptable distance for neighbors to be considered in imputation
 
-    返回：
-    - 插补后带 'Final_Meth_Level' 的 DataFrame，删除无法插补的低覆盖点
+    Returns:
+    - pandas.DataFrame: The DataFrame after imputation, with an added 'Final_Meth_Level' column. Low-coverage points that could not be imputed are deleted
     """
     df = df.copy()
     df = df.sort_values("Pos").reset_index(drop=True)
 
-    # 转为 numpy（支持 numba）
+    # Convert to NumPy (Numba-compatible).
     pos_arr = pd.to_numeric(df["Pos"], errors="coerce").values.astype(np.float64)
     meth_arr = pd.to_numeric(df["Meth_Level"], errors="coerce").values.astype(np.float64)
     cov_arr = pd.to_numeric(df["Coverage"], errors="coerce").values.astype(np.float64)
@@ -380,18 +378,18 @@ def fill_low_coverage_cpg_numba(df, coverage_threshold=5, max_distance=500):
     df = df.loc[~drop_mask].reset_index(drop=True)
     return df
 
-# 单样本串行处理
+# Single-sample serial processing
 def process_samples_old(sample_data, coverage_threshold=5, max_distance=500):
     """
-    顺序处理每个样本数据，执行 KNN 平滑处理。
+    Sequentially processes the data for each sample by performing K-Nearest Neighbors (KNN) smoothing
 
-    参数：
-    - sample_data: List[Dict]，每个 dict 包含 'sample', 'group', 'data'
-    - coverage_threshold: 低覆盖度阈值
-    - n_neighbors: KNN 的近邻个数
+    Parameters:
+    - sample_data: List[Dict],A list of dictionaries, where each dictionary contains keys 'sample', 'group', and 'data'. The 'data' key typically holds the sample's measurement data
+    - coverage_threshold: The threshold for defining low coverage
+    - n_neighbors: The number of nearest neighbors to use for KNN
 
-    返回：
-    - List[Dict]，结构与原始 sample_data 相同，但 data 为处理后的 DataFrame
+    Returns:
+    - List[Dict]:A list of dictionaries with the same structure as the original sample_data, but where the value associated with the 'data' key is the DataFrame after processing (KNN smoothing)
     """
     processed_results = []
 
@@ -508,8 +506,6 @@ def merge_samples_fast_old(processed_samples, sample_order):
 
     # **3 用 `merge()` 按 `Pos` 对齐，缺失值填充 `NaN`**
     for sample_id in sample_order:
-        #sample_df = processed_samples[sample_id][["Pos", "Final_Meth_Level"]].rename(columns={"Final_Meth_Level": sample_id})
-        #base_df = base_df.merge(sample_df, on="Pos", how="left")  # `left join`，确保 `Pos` 统一
         sample_df = processed_samples[sample_id][["Pos", "Final_Meth_Level"]].copy()
         sample_df["Final_Meth_Level"] = sample_df["Final_Meth_Level"].round(4)  # **保留 4 位小数**
         sample_df.rename(columns={"Final_Meth_Level": sample_id}, inplace=True)
@@ -556,13 +552,7 @@ def merge_samples_fast(processed_samples: dict) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    # 示例调用
-    #simulated_data = generate_methylation_data(chr_name="chr2", num_points=1000)
-    #process_data = fill_low_coverage_cpg(simulated_data)
-
-    #print(simulated_data.head(10))
-    #print(process_data.head(10))
-
+    
     output_folder = "/home/ly/shell/deepDMR/data/simulate_sample_data/raw2"
     os.makedirs(output_folder, exist_ok=True)  # 如果文件夹不存在，则创建
     
