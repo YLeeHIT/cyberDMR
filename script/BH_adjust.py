@@ -18,7 +18,7 @@ def generate_simulated_dmr_data(num_rows=1000, p_value_threshold=0.05, group1="g
     # Generate the number of CpGs (greater than 5).
     cpg_counts = np.random.randint(6, 50, num_rows)
 
-    # 生成平均甲基Generate mean methylation levels (balanced data).
+    # Generate mean methylation levels (balanced data).
     g1_values = np.random.uniform(0.5, 1, num_rows)
     g2_values = np.random.uniform(0.3, 0.5, num_rows)
 

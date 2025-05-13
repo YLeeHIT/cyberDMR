@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict
 
 # Pre-generate 80% of sites as fixed positions (assuming the entire genome consists of 1 million bases)
-BASE_CPG_SITES = np.sort(np.random.randint(1, 1_000_000, size=800))  # 80%固定位点
+BASE_CPG_SITES = np.sort(np.random.randint(1, 1_000_000, size=800))  # 80% fixed positions
 
 def generate_methylation_data(chr_name="chr1", num_points=1000, coverage_range=(1, 20), meth_range=(0, 1)):
     """
@@ -107,7 +107,7 @@ def simulate_multiple_samples(output_folder, group1_count=5, group2_count=5, chr
     with open(inlab_path, 'w') as f:
         f.write("\n".join(inlab_records))
 
-    print(f"[✔] inlab.txt 已写出到: {inlab_path}")
+    print(f"[✔] inlab.txt write to: {inlab_path}")
 
     return samples
 
@@ -408,7 +408,7 @@ def process_samples_old(sample_data, coverage_threshold=5, max_distance=500):
             })
         except Exception as e:
             print(f"[] 样本 {sample} 处理失败: {e}")
-            # 如果失败可以返回空 DataFrame
+            # If fail return DataFrame
             processed_results.append({
                 'sample': sample,
                 'group': group,
@@ -419,15 +419,15 @@ def process_samples_old(sample_data, coverage_threshold=5, max_distance=500):
 
 def process_samples(sample_data, coverage_threshold=5, max_distance=500):
     """
-    串行处理每个样本的甲基化数据，使用 GIMMEcpg-style 插补 + Numba 加速版本。
+    Sequentially processes methylation data for each sample using a Numba-accelerated, GIMMEcpg-style imputation method
 
-    参数：
-    - sample_data: List[Dict]，每个 dict 包含 'sample', 'group', 'data'
-    - coverage_threshold: 低覆盖度定义阈值
-    - max_distance: 插补时左右邻居最大允许距离
+    Parameters:
+    - sample_data: List[Dict]，A list of dictionaries, where each dictionary represents a sample and contains the keys 'sample', 'group', and 'data'
+    - coverage_threshold:  The threshold for defining low coverage
+    - max_distance: The maximum allowable distance for considering left and right neighbors during imputation
 
-    返回：
-    - List[Dict]，结构与 sample_data 相同，但 'data' 为插补后的 DataFrame
+    Returns:
+    - List[Dict]，A list of dictionaries with the same structure as the input sample_data, but where the value for the 'data' key in each dictionary is the DataFrame after imputation
     """
     processed_results = []
 
@@ -456,16 +456,16 @@ def process_samples(sample_data, coverage_threshold=5, max_distance=500):
 
 def process_samples_parallel(sample_data, coverage_threshold=5, max_distance=500, num_threads=4):
     """
-    多线程并发处理多个样本数据（适合样本数量多，独立性强的情况）
+    Concurrently processes data for multiple samples using multiple threads. This method is suitable for cases with a large number of samples that can be processed independently
 
-    参数：
-    - sample_data: List[Dict]，包含 sample/group/data
-    - coverage_threshold: Coverage 阈值
-    - max_distance: 插补时邻居最大距离
-    - num_threads: 并发线程数（默认 4）
+    Parameters:
+    - sample_data: List[Dict]，A list of dictionaries, where each dictionary contains information for a sample, including keys like 'sample', 'group', and 'data'
+    - coverage_threshold: The coverage threshold
+    - max_distance:  The maximum distance to consider for neighbors during imputation
+    - num_threads:  The number of concurrent threads to use (default is 4)
 
-    返回：
-    - List[Dict]，顺序与原始 sample_data 保持一致
+    Returns:
+    - List[Dict]，A list of dictionaries containing the processed data for each sample. The order of items in the list is maintained consistently with the input sample_data
     """
     def process_one(entry):
         sample = entry['sample']
@@ -480,50 +480,50 @@ def process_samples_parallel(sample_data, coverage_threshold=5, max_distance=500
             return {'sample': sample, 'group': group, 'data': pd.DataFrame()}
 
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
-        results = list(executor.map(process_one, sample_data))  # 顺序保留
+        results = list(executor.map(process_one, sample_data))  # Preserve order
 
     return results
 
 def merge_samples_fast_old(processed_samples, sample_order):
     """
-    采用更快的方法合并所有样本的数据，并确保 `Pos` 对齐，不同样本没有该 `Pos` 时填充 `NaN`。
+    Merges data from all samples using an optimized (faster) method. This process ensures alignment based on Pos (position) values, and fills with NaN where a sample lacks data for a specific Pos.
     
-    参数：
-    - processed_samples: 经过 fill_low_coverage_cpg 处理后的样本数据（字典形式）
-    - sample_order: 样本名称顺序
+    Parameters:
+    - processed_samples: Sample data that has been processed. This is typically in a dictionary format(e.g., a dictionary mapping sample names to their data, or a list of dictionaries each pertaining to a sample).
+    - sample_order: A list specifying the desired order of sample names, which often dictates the column order in the output DataFrame.
 
-    返回：
-    - 处理后的 DataFrame 缺失值为 `NaN`
+    Returns:
+    - The processed DataFrame containing the merged and aligned data from all samples, where missing values are represented as NaN
     """
-    # **1 提取所有 `Pos` 位置**
+    # **1 Extract all Pos positions**
     all_positions = set()
     for df in processed_samples.values():
         all_positions.update(df["Pos"])
 
-    # **2 统一 `Pos`**
+    # **2 Unify `Pos`**
     all_positions = sorted(all_positions)
     base_df = pd.DataFrame({"Pos": all_positions})
 
-    # **3 用 `merge()` 按 `Pos` 对齐，缺失值填充 `NaN`**
+    # **3 Use merge() to align by Pos, filling missing values with NaN**
     for sample_id in sample_order:
         sample_df = processed_samples[sample_id][["Pos", "Final_Meth_Level"]].copy()
-        sample_df["Final_Meth_Level"] = sample_df["Final_Meth_Level"].round(4)  # **保留 4 位小数**
+        sample_df["Final_Meth_Level"] = sample_df["Final_Meth_Level"].round(4)  # **Keep 4 decimal places**
         sample_df.rename(columns={"Final_Meth_Level": sample_id}, inplace=True)
-        base_df = base_df.merge(sample_df, on="Pos", how="left")  # `left join`，确保 `Pos` 统一
+        base_df = base_df.merge(sample_df, on="Pos", how="left")  # `left join`，Ensure Pos values are unified
 
-    base_df.insert(0, "Chr", processed_samples[sample_order[0]]["Chr"].iloc[0])  # 插入 `Chr` 列
+    base_df.insert(0, "Chr", processed_samples[sample_order[0]]["Chr"].iloc[0])  # Insert a Chr column
 
     return base_df
 
 def merge_samples_fast(processed_samples: dict) -> pd.DataFrame:
     """
-    合并所有样本的 Final_Meth_Level 按 Pos 对齐 没有的位点填充 NaN。
+    Merges the 'Final_Meth_Level' column from all samples, aligning them based on the 'Pos' column. Sites not present in a particular sample (for a given 'Pos') are filled with NaN.
 
-    参数：
-        - processed_samples: 字典，键为样本名，值为含有 "Pos" 和 "Final_Meth_Level" 的 DataFrame
+    Parameters:
+        - processed_samples: A dictionary where keys are sample names and values are DataFrames. Each DataFrame value must contain 'Pos' and 'Final_Meth_Level' columns.
 
-    返回：
-        - 合并后的 DataFrame 包含 Chr, Pos, 和每个样本的 Final_Meth_Level
+    Returns:
+        - The merged DataFrame, which includes 'Chr' and 'Pos' columns, as well as a 'Final_Meth_Level' column for each individual sample
     """
     if not processed_samples:
         raise ValueError("processed_samples 为空")
@@ -533,7 +533,7 @@ def merge_samples_fast(processed_samples: dict) -> pd.DataFrame:
     )
     base_df = pd.DataFrame({"Pos": all_positions})
 
-    # 按样本依次合并
+    # Merge sequentially by sample
     for entry in processed_samples:
         sample_id = entry['sample']
         df = entry['data'][["Pos", "Final_Meth_Level"]].copy()
@@ -542,7 +542,7 @@ def merge_samples_fast(processed_samples: dict) -> pd.DataFrame:
         df.rename(columns={"Final_Meth_Level": sample_id}, inplace=True)
         base_df = base_df.merge(df, on="Pos", how="left")
 
-    # 插入 Chr 列（假设所有样本染色体相同）
+    # Insert a 'Chr' column (assuming all samples are from the same chromosome)
     chr_name = processed_samples[0]['data']["Chr"].iloc[0]
     base_df.insert(0, "Chr", chr_name)
 
@@ -554,7 +554,7 @@ def merge_samples_fast(processed_samples: dict) -> pd.DataFrame:
 if __name__ == "__main__":
     
     output_folder = "/home/ly/shell/deepDMR/data/simulate_sample_data/raw2"
-    os.makedirs(output_folder, exist_ok=True)  # 如果文件夹不存在，则创建
+    os.makedirs(output_folder, exist_ok=True)  # If the folder does not exist, then create it
     
     num_sample = 10
     chr_name = "chr1"
