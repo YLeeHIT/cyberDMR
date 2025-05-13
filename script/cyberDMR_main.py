@@ -5,9 +5,9 @@ from concurrent.futures import ProcessPoolExecutor
 
 # my model
 import read_samples as reading
-import low_coverage_v2 as filling
-import cpg_blocking_v2 as blocking
-import cpg_clustering_v5 as clustering
+import low_coverage as filling
+import cpg_blocking as blocking
+import cpg_clustering as clustering
 
 def parse_args():
     """
