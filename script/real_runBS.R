@@ -31,7 +31,7 @@ read.lister <- function(file) {
   BS
 }
 
-# ========== Step 0: 读取命令行参数 ==========
+# ========== Step 0: Read command-line arguments ==========
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) < 3) {
@@ -48,10 +48,10 @@ g1 <- "lethal"
 g2 <- "normal"
 threads <- 8
 
-# ========== Step 1: 加载包 ==========
+# ========== Step 1: Load libraries ==========
 suppressMessages(library(bsseq))
 
-# ========== Step 2: 构建路径 ==========
+# ========== Step 2: Construct path ==========
 sample_tag <- basename(input_dir)
 output_dir <- file.path(input_dir, "BSmooth_result")
 #print(output_dir)  
@@ -65,20 +65,20 @@ if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
 }
 
-# ========== Step 3: 读取样本信息 ==========
+# ========== Step 3: Read sample information ==========
 meta <- read.csv(meta_file, header = FALSE, stringsAsFactors = FALSE, sep = '\t')
 colnames(meta) <- c("Sample", "Group", "Directory")
 
-# ========== Step 4: 构建 BSseq List ==========
+# ========== Step 4: Construct BSseq List ==========
 bs_list <- list()
 for (i in seq_len(nrow(meta))) {
-  bs <- read.lister(meta$Directory[i])  # 你自己定义的 read.lister 函数应提前存在或source()
+  bs <- read.lister(meta$Directory[i])  # Your user-defined read.lister function should either already exist or be loaded (e.g., using source())
   name <- paste(meta$Group[i], meta$Sample[i], sep = "_")
   sampleNames(bs) <- name
   bs_list[[name]] <- bs
 }
 
-# ========== Step 5: 合并样本 ==========
+# ========== Step 5: Merge samples ==========
 bs_all <- Reduce(combine, bs_list)
 group_vector <- c(rep(g1, sum(meta$Group == g1)),
                   rep(g2, sum(meta$Group == g2)))
@@ -87,7 +87,7 @@ pData(bs_all)$Rep <- group_vector
 # ========== Step 6: BSmooth ==========
 bs_smooth <- BSmooth(bs_all)
 
-# ========== Step 7: t统计量 ==========
+# ========== Step 7: t-statistic ==========
 group1 <- sampleNames(bs_smooth)[pData(bs_smooth)$Rep == g1]
 group2 <- sampleNames(bs_smooth)[pData(bs_smooth)$Rep == g2]
 
@@ -101,12 +101,12 @@ bs_tstat <- BSmooth.tstat(
   verbose = TRUE
 )
 
-# ========== Step 8: 检测 DMR ==========
+# ========== Step 8: Detect DMRs ==========
 dmrs <- dmrFinder(bs_tstat, cutoff = c(-4.6, 4.6), stat = "tstat")
 dmrs <- dmrFinder(bs_tstat, qcutoff = c(0.05, 0.95), stat = "tstat" )
 dmrs_filter <- subset(dmrs, n >= 5 & abs(meanDiff) >= 0.1)
 
-# ========== Step 9: 保存结果 ==========
+# ========== Step 9: Save results ==========
 write.table(dmrs, file.path(output_dir, "dmrs.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
 write.table(dmrs_filter, file.path(output_dir, "dmrs_filter.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
 

@@ -7,7 +7,7 @@ from scipy.stats import chi2
 from statsmodels.othermod.betareg import BetaModel
 
 
-# **🚀 Step 1: Process input data**
+# ** Step 1: Process input data**
 # Generate simulated data, which includes the original input matrix and a statistical matrix
 def generate_simulated_data(
         num_cpg=10, interval=50, std_dev=0.05,
@@ -68,7 +68,7 @@ def convert_to_long_format(df_wide):
     df_long["Group"] = df_long["Sample"].apply(lambda x: "group1" if "G1" in x else "group2")
     return df_long
 
-# **🚀 Step 2: Calculate Beta distribution parameters**
+# ** Step 2: Calculate Beta distribution parameters**
 def compute_beta_params(df_summary, coverage_threshold=5, group1="g1", group2="g2"):
     """
     Calculate Beta distribution parameters, with specific handling for the following cases:
@@ -105,7 +105,7 @@ def compute_beta_params(df_summary, coverage_threshold=5, group1="g1", group2="g
     df_beta = pd.DataFrame(beta_params, columns=["Chr_Pos", "Group", "Alpha", "Beta", "Coverage"])
     return df_beta
 
-# **🚀 Step 3: Calculate weights**
+# ** Step 3: Calculate weights**
 def compute_weights(df_beta, df_summary, lambda_factor=0.5, gamma_factor=0.2, group1="g1", group2="g2"):
     """
     Calculate weights, considering within-group variance, coverage (number of samples), and methylation level difference
@@ -173,7 +173,7 @@ def prepare_summary_for_merge(df_summary, group1="g1", group2="g2"):
 
     return df_summary_grouped
 
-# **🚀 Step 4: Run WBR**
+# ** Step 4: Run WBR**
 
 # MLE + LRT
 def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_value=15):
@@ -274,24 +274,24 @@ def compute_f_statistic(df_weights, group1="g1", group2="g2"):
     - F_stat: The calculated F-statistic
     """
 
-    # ✅ Sort by Chr_Pos and Group to ensure correct matching
+    # Sort by Chr_Pos and Group to ensure correct matching
     df_weights = df_weights.sort_values(by=["Chr_Pos", "Group"]).reset_index(drop=True)
 
-    # ✅ Calculate between-group variance S_between
+    # Calculate between-group variance S_between
     mean_group1 = df_weights[df_weights["Group"] == group1]["mean"].mean()
     mean_group2 = df_weights[df_weights["Group"] == group2]["mean"].mean()
     S_between = np.abs(mean_group1 - mean_group2)  # Avoid negative numbers
 
-    # ✅ Calculate within-group variance S_within
+    # Calculate within-group variance S_within
     var_group1 = df_weights[df_weights["Group"] == group1]["mean"].var(ddof=1)
     var_group2 = df_weights[df_weights["Group"] == group2]["mean"].var(ddof=1)
     S_within = (var_group1 + var_group2) / 2  # Take the mean (e.g., of variances), to avoid a scenario where any single group's variance is 0
 
-    # ✅ Prevent S_within (e.g., within-group sum of squares or variance) from being too small to avoid division by zero errors
+    # Prevent S_within (e.g., within-group sum of squares or variance) from being too small to avoid division by zero errors
     epsilon = 1e-8  # Set a small constant (epsilon) to prevent the denominator from being too small
     S_within = max(S_within, epsilon)
 
-    # ✅ Calculate the F-statistic
+    # Calculate the F-statistic
     F_stat = S_between / S_within
 
     return F_stat

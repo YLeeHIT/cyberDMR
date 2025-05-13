@@ -1,7 +1,7 @@
 import heapq
 import numpy as np
 import pandas as pd
-import cpg_blocking_v2 as blocking
+import cpg_blocking as blocking
 
 def calculate_score(delta_m, distance, d_max, alpha=1.0, beta=0.1):
     """ Calculate the priority score for the expansion direction """

@@ -4,6 +4,7 @@ import random
 import argparse
 import shutil
 import os
+from datetime import datetime
 from scipy.stats import beta
 from datetime import datetime
 from collections import defaultdict
@@ -13,8 +14,8 @@ def parse_args():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="/home/ly/shell/deepDMR/data/simulate_from_python/samples_16",
-        help="outdir (default: /home/ly/shell/deepDMR/data/simulate_from_python/samples_15"
+        default="./",
+        help="outdir (default: ./"
     )
     return parser.parse_args()
 
@@ -68,7 +69,6 @@ def simulate_dmr_region_with_input_limit(chr_name, region_start, region_end, del
             cpg_sites.append(pos)
 
     if len(cpg_sites) == 0:
-        #raise ValueError("Cannot place CpG sites within the given region. Please check the start and end positions")
         return None
 
     # If terminated early due to exceeding the maximum number, update the end position
@@ -198,7 +198,6 @@ def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation
 
     actual_delta = round(np.mean(treatment_vals) - np.mean(control_vals), 3)
 
-    # c
     if actual_delta > 0.1 or actual_delta < -0.1:
         return None
 
@@ -369,7 +368,7 @@ def simulate_group_samples_with_missing(
     coverage_mean: int,
     coverage_std: int,
     group_std: float,
-    output_dir: str = "/mnt/data/sample_outputs"
+    output_dir: str = "./"
 ):
     os.makedirs(output_dir, exist_ok=True)
 
@@ -453,7 +452,7 @@ def validate_nondmr_from_samples(cpg_sites, all_samples, n_control, n_treatment,
             delta = 0
         deltas.append(delta)
 
-    # 1. Check the number of consecutive out-of-bounds/limit-exceeding occurrences
+    # Check the number of consecutive out-of-bounds/limit-exceeding occurrences
     consecutive = 0
     max_consec = 0
     over_threshold_count = 0
@@ -468,7 +467,7 @@ def validate_nondmr_from_samples(cpg_sites, all_samples, n_control, n_treatment,
     too_many_consecutive = max_consec > max_consecutive
     too_many_total = over_threshold_count > len(cpg_sites) / 2
 
-    # 2. Check the mean difference of sub-regions using a sliding window
+    # Check the mean difference of sub-regions using a sliding window
     found_dmr_window = False
     for i in range(len(deltas) - window_size + 1):
         window = deltas[i:i + window_size]
@@ -488,7 +487,7 @@ def simulate_group_samples_with_validation(
     coverage_mean: int,
     coverage_std: int,
     group_std: float,
-    output_dir: str = "/mnt/data/sample_outputs",
+    output_dir: str = "./",
     max_retries: int = 10
 ):
     for attempt in range(max_retries):
@@ -562,8 +561,6 @@ def simulate_group_samples_with_validation(
     }   
 
 
-from datetime import datetime
-import os
 
 def write_simulation_parameters(
     output_dir: str,
@@ -634,7 +631,7 @@ def simulate_mixed_regions_randomized(
     n_treatment: int,
     coverage_mean: int,
     coverage_std: int,
-    output_dir: str = "/mnt/data/sample_outputs",
+    output_dir: str = "./",
     chr_name: str = "chr1",
     start_pos: int = 10000,
     length_mean: int= 1000,
@@ -681,7 +678,6 @@ def simulate_mixed_regions_randomized(
         region_length = max(100, region_length)
         end = pos + region_length
         
-
         # Generate some negative deltas: 80% probability to keep the original value (positive), 20% probability to negate the original value (making it negative)
         sign = 1 if random.random() < 0.8 else -1
 
@@ -795,18 +791,16 @@ def simulate_mixed_regions_randomized(
     max_gap=5000)
     return df
 
-
-
 def main():
     parser = argparse.ArgumentParser(description="Simulate DMR regions")
 
-    parser.add_argument("--total_dmr", type=int, default=1000)
+    parser.add_argument("--total_dmr", type=int, default=100)
     parser.add_argument("--mean_delta", type=float, default=0.3)
     parser.add_argument("--n_control", type=int, default=5)
     parser.add_argument("--n_treatment", type=int, default=5)
     parser.add_argument("--coverage_mean", type=int, default=30)
     parser.add_argument("--coverage_std", type=int, default=5)
-    parser.add_argument("--output_dir", type=str, default="/mnt/data/sample_outputs")
+    parser.add_argument("--output_dir", type=str, default="./")
     parser.add_argument("--chr_name", type=str, default="chr1")
     parser.add_argument("--start_pos", type=int, default=10000)
     parser.add_argument("--length_mean", type=int, default=1000)

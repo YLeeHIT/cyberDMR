@@ -53,9 +53,9 @@ p_upset <- upset(
   width_ratio = 0.4
 ) +
   theme(  
-    axis.text.x = element_blank(), # x轴文本
-    axis.text.y = element_text(size = 14), # y轴文本
-    strip.text = element_text(size = 16), # 交集组合标签
+    axis.text.x = element_blank(), # x-axis text
+    axis.text.y = element_text(size = 14), # y-axis text
+    strip.text = element_text(size = 16), # Labels for intersection combinations
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank()
   ) 
@@ -88,7 +88,6 @@ venn_list <- list(
 p_venn <- ggVennDiagram(venn_list, label_alpha = 0, label = "count", label_size = 4, set_size = 4,
                         edge_size = 0.5)  +
   theme(legend.position = "none",) +
-  # scale_fill_gradientn(colors = c("#f7fbff", "#6baed6", "#1868b2"))
   scale_fill_gradientn(colors = c("grey", "grey", "grey"))
 
 p_venn
