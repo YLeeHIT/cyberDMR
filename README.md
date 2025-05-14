@@ -2,6 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Language](https://img.shields.io/badge/language-python-blue)
+![Language](https://img.shields.io/badge/language-shell-4EAA25)
 ![Language](https://img.shields.io/badge/language-R-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-linux%20|%20macOS-brightgreen)
@@ -53,6 +54,14 @@ python simulated_data.py \
     --seed 42
 ```
 
+To generate input files in formats compatible with **cyberDMR**, **Metilene**, **BSmooth**, and **HOME**, run the provided merging script:
+
+```bash
+bash merge_simulates_samples.sh -o ../data/simulate_data
+```
+
+
+
 ## Run cyberDMR
 After generating the simulated methylation data, you can run **cyberDMR** to detect DMRs between two groups:
 
@@ -62,6 +71,19 @@ python cyberDMR.py \
     --threads 4 \
     --group1 control \
     --group2 treatment
+```
+
+### Quick Start (Recommended)
+
+To simplify everything, you can run the pre-configured shell script:
+
+```bash
+bash simulate_data.sh -o ../data/simulate_data
+```
+
+View help information:
+```bash
+bash simulate_data.sh -h
 ```
 
 # Release Notes
