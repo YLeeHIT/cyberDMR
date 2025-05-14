@@ -7,7 +7,7 @@ from concurrent.futures import ProcessPoolExecutor
 import read_samples as reading
 import low_coverage as filling
 import cpg_blocking as blocking
-import cpg_clustering_v5 as clustering
+import cpg_clustering as clustering
 
 def parse_args():
     """

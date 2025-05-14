@@ -1,5 +1,4 @@
 library(GenomicRanges)
-# library(UpSetR)
 library(ComplexUpset)
 library(ggVennDiagram)
 
@@ -9,7 +8,6 @@ bsmooth <- read.table("~/project/methDmr/real-data/prostate_cancer/GSE158927/res
 home <- read.table("~/project/methDmr/real-data/prostate_cancer/GSE158927/result/home.bed", header = FALSE, sep = '\t')
 benchmark <- read.table("~/project/methDmr/real-data/prostate_cancer/GSE158927/result/benchmark.bed", header = FALSE, sep = '\t')
 
-
 gr_cyber <- GRanges(seqnames = cyber$V1, ranges = IRanges(start = cyber$V2, end = cyber$V3))
 gr_metilene <- GRanges(seqnames = metilene$V1, ranges = IRanges(start = metilene$V2, end = metilene$V3))
 gr_bsmooth <- GRanges(seqnames = bsmooth$V1, ranges = IRanges(start = bsmooth$V2, end = bsmooth$V3))
@@ -17,9 +15,7 @@ gr_home <- GRanges(seqnames = home$V1, ranges = IRanges(start = home$V2, end = h
 gr_benchmark <- GRanges(seqnames = benchmark$V1, ranges = IRanges(start = benchmark$V2, end = benchmark$V3))
 
 all_regions <- reduce(c(gr_cyber, gr_metilene, gr_bsmooth, gr_home, gr_benchmark))
-# all_regions <- unique(c(gr_cyber, gr_metilene, gr_bsmooth, gr_home, gr_benchmark))
 
-# length(gr_cyber)
 sum(df$cyberDMR)
 sum(df$Metilene)
 sum(df$HOME)

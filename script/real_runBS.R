@@ -37,13 +37,12 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 3) {
   stop("Please provide sample parameters, such as: Rscript bsmooth_dmrs.R /mnt/data/samples_20")
 }
-#sample_tag <- args[1]
 input_dir <- args[1]
 g1 <- args[2]
 g2 <- args[3]
 threads <- args[4]
 
-input_dir <- "/home/user/liyang/project/methDmr/real-data/prostate_cancer/GSE158927/split/result/formatted_BSmooth"
+input_dir <- "~/project/methDmr/real-data/prostate_cancer/GSE158927/split/result/formatted_BSmooth"
 g1 <- "lethal"
 g2 <- "normal"
 threads <- 8
@@ -72,7 +71,7 @@ colnames(meta) <- c("Sample", "Group", "Directory")
 # ========== Step 4: Construct BSseq List ==========
 bs_list <- list()
 for (i in seq_len(nrow(meta))) {
-  bs <- read.lister(meta$Directory[i])  # Your user-defined read.lister function should either already exist or be loaded (e.g., using source())
+  bs <- read.lister(meta$Directory[i])
   name <- paste(meta$Group[i], meta$Sample[i], sep = "_")
   sampleNames(bs) <- name
   bs_list[[name]] <- bs

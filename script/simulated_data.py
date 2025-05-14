@@ -19,7 +19,6 @@ def parse_args():
     )
     return parser.parse_args()
 
-
 # Function to simulate DMR (Differentially Methylated Region) regions
 def simulate_dmr_region_with_input_limit(chr_name, region_start, region_end, delta_methylation, max_cpgs=50, density="auto"):
     """
@@ -136,6 +135,7 @@ def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation
     Returns:
     A dictionary containing information about the simulated non-DMR 
     """
+
     # Define the minimum and maximum interval (unit: bp) between every two CpGs
     if density == "dense":
         min_distance = 2
@@ -179,7 +179,6 @@ def simulate_nondmr_region(chr_name, region_start, region_end, delta_methylation
         return None
 
     region_end_final = min(region_end, cpg_sites[-1])
-
     mean_control = np.random.uniform(0.2, 0.8)
     delta_methylation_modify = round(np.random.normal(loc=delta_methylation, scale=0.01), 3)
     mean_treatment = mean_control + delta_methylation_modify
@@ -349,7 +348,6 @@ def simulate_dmr_with_subdmr_points(chr_name, region_start, region_end, delta_me
     # Check if sub-DMRs are formed
     return check_split_subdmrs(dmr, indices)
 
-
 # Utility function: Derive alpha and beta parameters for a beta distribution from mean and std (standard deviation)
 def beta_params_from_mean_std(mean, std):
     mean = np.clip(mean, 1e-3, 1 - 1e-3)
@@ -358,7 +356,6 @@ def beta_params_from_mean_std(mean, std):
     alpha = mean * common
     beta_ = (1 - mean) * common
     return max(alpha, 1e-3), max(beta_, 1e-3)
-
 
 # Sample expansion function with missing value control
 def simulate_group_samples_with_missing(
@@ -424,7 +421,6 @@ def simulate_group_samples_with_missing(
         "sample_missing_rate": sample_missing_rate
     }
 
-
 # Updated validation function, adding logic to assess mean values of sliding window sub-regions
 def validate_nondmr_from_samples(cpg_sites, all_samples, n_control, n_treatment,
                                   delta_threshold=0.1, max_consecutive=3, window_size=5):
@@ -478,7 +474,6 @@ def validate_nondmr_from_samples(cpg_sites, all_samples, n_control, n_treatment,
 
     passed = not (too_many_consecutive or too_many_total or found_dmr_window)
     return passed, deltas
-
 
 def simulate_group_samples_with_validation(
     dmr,
@@ -560,8 +555,6 @@ def simulate_group_samples_with_validation(
         "error": "Failed to simulate valid non-DMR after max retries"
     }   
 
-
-
 def write_simulation_parameters(
     output_dir: str,
     total_dmr: int,
@@ -612,7 +605,6 @@ def write_simulation_parameters(
         f.write(f"Coverage mean: {coverage_mean}\n")
         f.write(f"Coverage std: {coverage_std}\n")
         f.write(f"Random seed: {seed}\n")
-
 
 def get_random_density(density, dense_ratio):
     if density == "mix":
@@ -724,7 +716,6 @@ def simulate_mixed_regions_randomized(
                 regions.append(region)
 
                 region_output_dir = os.path.join(output_dir, f"{chr_name}_{region['start']}_{region['end']}_{task}")
-
                 simulate_group_samples_with_validation(
                     dmr=region,
                     n_control=n_control,
@@ -785,7 +776,7 @@ def simulate_mixed_regions_randomized(
     seed=seed,
     length_mean=length_mean,
     length_std=length_std,
-    density=density,  # or "sparse" / "auto"
+    density=density, 
     dense_ratio=dense_ratio,
     min_gap=500,
     max_gap=5000)
@@ -842,6 +833,5 @@ def main():
     print("Simulation completed.")
     df.to_csv(f"{args.output_dir}/DMRs.txt",sep="\t",header=True,index=False)
 
-# Main logic entry point
 if __name__ == "__main__":
     main()

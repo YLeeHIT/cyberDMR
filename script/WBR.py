@@ -6,8 +6,6 @@ from scipy.special import logit
 from scipy.stats import chi2
 from statsmodels.othermod.betareg import BetaModel
 
-
-# ** Step 1: Process input data**
 # Generate simulated data, which includes the original input matrix and a statistical matrix
 def generate_simulated_data(
         num_cpg=10, interval=50, std_dev=0.05,
@@ -33,9 +31,8 @@ def generate_simulated_data(
     mean_group2 = np.mean(meth_group2, axis=1)
     var_group2 = np.var(meth_group2, axis=1, ddof=1) if group2_size > 1 else np.zeros(num_cpg)
     
-    delta_M = mean_group2 - mean_group1  # Calculate the methylation difference between the two groups
+    delta_M = mean_group2 - mean_group1 
     block = ["block1"] * num_cpg
-    # Construct wide-format data
     df_wide = pd.DataFrame({
         "Chromosome": ["chr1"] * num_cpg,
         "Position": positions,
@@ -56,7 +53,6 @@ def generate_simulated_data(
         "mean_diff": delta_M,
         "Block": block
     })
-
     return df_wide, df_summary
 
 # Convert to long-format data
@@ -68,7 +64,7 @@ def convert_to_long_format(df_wide):
     df_long["Group"] = df_long["Sample"].apply(lambda x: "group1" if "G1" in x else "group2")
     return df_long
 
-# ** Step 2: Calculate Beta distribution parameters**
+# Calculate Beta distribution parameters
 def compute_beta_params(df_summary, coverage_threshold=5, group1="g1", group2="g2"):
     """
     Calculate Beta distribution parameters, with specific handling for the following cases:
@@ -82,7 +78,7 @@ def compute_beta_params(df_summary, coverage_threshold=5, group1="g1", group2="g
         mean_g1, var_g1, cov_g1 = row[f"{group1}_mean"], row[f"{group1}_var"], row[f"{group1}_cov"]
         mean_g2, var_g2, cov_g2 = row[f"{group2}_mean"], row[f"{group2}_var"], row[f"{group2}_cov"]
 
-        # **1. For low coverage (n < 5), use a Bayesian prior**
+        # For low coverage (n < 5), use a Bayesian prior
         if cov_g1 < coverage_threshold:
             alpha_g1 = 2 + mean_g1 * cov_g1
             beta_g1 = 2 + (cov_g1 - mean_g1 * cov_g1)
@@ -105,7 +101,7 @@ def compute_beta_params(df_summary, coverage_threshold=5, group1="g1", group2="g
     df_beta = pd.DataFrame(beta_params, columns=["Chr_Pos", "Group", "Alpha", "Beta", "Coverage"])
     return df_beta
 
-# ** Step 3: Calculate weights**
+# Calculate weights
 def compute_weights(df_beta, df_summary, lambda_factor=0.5, gamma_factor=0.2, group1="g1", group2="g2"):
     """
     Calculate weights, considering within-group variance, coverage (number of samples), and methylation level difference
@@ -117,8 +113,8 @@ def compute_weights(df_beta, df_summary, lambda_factor=0.5, gamma_factor=0.2, gr
 
     for _, row in df_summary.iterrows():
         chr_pos = (row["Chromosome"], row["Position"])
-        delta_M = abs(row["mean_diff"])  # Directly use the pre-calculated methylation level difference
-        cov_g1, cov_g2 = row[f"{group1}_cov"], row[f"{group2}_cov"]  # Coverage of Group 1 & Group 2
+        delta_M = abs(row["mean_diff"]) 
+        cov_g1, cov_g2 = row[f"{group1}_cov"], row[f"{group2}_cov"]
 
         # Get Beta parameters
         sub_beta = df_beta[df_beta["Chr_Pos"] == chr_pos]
@@ -151,11 +147,9 @@ def prepare_summary_for_merge(df_summary, group1="g1", group2="g2"):
     - Generate or format the 'Chr_Pos' column to match the format of the 'Chr_Pos' column in the `df_weights` DataFrame
     """
 
-    # ✅ Create a Chr_Pos column
     df_summary = df_summary.copy()
     df_summary["Chr_Pos"] = df_summary.apply(lambda row: f"({row['Chromosome']}, {row['Position']})", axis=1)
 
-    # ✅ Keep only the required columns
     df_summary_g1 = df_summary[["Chr_Pos", f"{group1}_mean"]].copy()
     df_summary_g1.rename(columns={f"{group1}_mean": "mean"}, inplace=True)
     df_summary_g1["Group"] = group1
@@ -164,17 +158,14 @@ def prepare_summary_for_merge(df_summary, group1="g1", group2="g2"):
     df_summary_g2.rename(columns={f"{group2}_mean": "mean"}, inplace=True)
     df_summary_g2["Group"] = group2
 
-    # ✅ Concatenate data vertically 
     df_summary_grouped = pd.concat([df_summary_g1, df_summary_g2], axis=0, ignore_index=True)
 
-    # ✅ Sort by Pos, then by Group (with group1 first)
     df_summary_grouped["Position"] = df_summary_grouped["Chr_Pos"].apply(lambda x: int(x.split(", ")[1][:-1]))  # 提取 Pos
     df_summary_grouped = df_summary_grouped.sort_values(by=["Position", "Group"], ascending=[True, True]).drop(columns=["Position"])
 
     return df_summary_grouped
 
-# ** Step 4: Run WBR**
-
+# Run WBR
 # MLE + LRT
 def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_value=15):
     """
@@ -183,28 +174,20 @@ def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_valu
     
     df_summary = prepare_summary_for_merge(df_summary, group1=group1, group2=group2)
     
-    # ✅ Assign Mean_Group1 and Mean_Group2 to df_weights
     df_weights["mean"] = df_summary["mean"].values
-
-    # ✅ Ensure Mean values are strictly between 0 and 1 (i.e., in the open interval (0,1)) to avoid logit calculation errors
     df_weights["mean"] = df_weights["mean"].clip(0.001, 0.999)
 
-    # ✅ Run Beta regression
     df_weights["Group"] = df_weights["Group"].astype("category")  # Ensure variables are treated as factors (factor variables)
-    # Explicitly specify the reference group order to prevent issues of 'reversed interpretation' (e.g., misinterpreting the direction of effects)
     df_weights["Group"] = pd.Categorical(df_weights["Group"], categories=[group1, group2])
 
-    
-    F_stat = compute_f_statistic(df_weights, group1=group1, group2=group2)  # ✅ Use df_summary
+    F_stat = compute_f_statistic(df_weights, group1=group1, group2=group2)
     if F_stat > f_value:
         model = BetaModel.from_formula("mean ~ Group", df_weights, link=sm.families.links.Logit())
         result = model.fit()
 
-        
         beta_0 = result.params["Intercept"]
         beta_1 = result.params[f"Group[T.{group2}]"]
         
-
         # Calculate the true methylation level difference Δμ
         mu_C = np.exp(beta_0) / (1 + np.exp(beta_0))
         mu_T = np.exp(beta_0 + beta_1) / (1 + np.exp(beta_0 + beta_1))
@@ -217,50 +200,11 @@ def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_valu
         logL_null = result_null.llf
 
         LRT_stat = -2 * (logL_null - logL_full)
-        p_value = chi2.sf(LRT_stat, df=1)  # Calculate p-value
+        p_value = chi2.sf(LRT_stat, df=1) 
     else:
         p_value = delta_mu = mu_C = mu_T = np.nan
 
     return p_value, delta_mu, mu_C, mu_T, F_stat
-
-# WLS + Wlad 
-def wls_regression(df_weights, df_summary, group1="g1", group2="g2"):
-    """
-    Perform weighted least squares (WLS) regression and use the Wald test to calculate the p-value
-    """
-    
-    df_summary = prepare_summary_for_merge(df_summary, group1=group1, group2=group2)
-    
-
-    df_weights["mean"] = df_summary["mean"].values
-
-
-    # ✅ Ensure Mean values are strictly between 0 and 1 (i.e., in the open interval (0,1)) to avoid logit calculation errors
-    df_weights["mean"] = df_weights["mean"].clip(0.001, 0.999)
-    
-
-    # ✅ Redefine X, y, weights
-    df_weights["logit(mean)"] = np.log(df_weights["mean"] / (1 - df_weights["mean"]))
-    X = np.where(df_weights["Group"] == group1, 1, 0)
-    X = sm.add_constant(X)  # Add an intercept term
-    y = df_weights["logit(mean)"]
-    weights = df_weights["Weight"]
-
-    model = sm.WLS(y, X, weights=weights).fit()
-    beta_0 = model.params.iloc[0]
-    beta_1 = model.params.iloc[1]
-
-    # Calculate the true methylation level difference Δμ
-    mu_C = np.exp(beta_0) / (1 + np.exp(beta_0))
-    mu_T = np.exp(beta_0 + beta_1) / (1 + np.exp(beta_0 + beta_1))
-    delta_mu = mu_C - mu_T
-
-    # Calculate the Wald test p-value
-    SE_beta1 = model.bse.iloc[1]  # Standard Error
-    Z_stat = beta_1 / SE_beta1
-    p_value = 2 * (1 - chi2.cdf(abs(Z_stat), df=1))
-
-    return p_value, delta_mu, mu_C, mu_T
 
 # F-test
 def compute_f_statistic(df_weights, group1="g1", group2="g2"):
@@ -285,65 +229,14 @@ def compute_f_statistic(df_weights, group1="g1", group2="g2"):
     # Calculate within-group variance S_within
     var_group1 = df_weights[df_weights["Group"] == group1]["mean"].var(ddof=1)
     var_group2 = df_weights[df_weights["Group"] == group2]["mean"].var(ddof=1)
-    S_within = (var_group1 + var_group2) / 2  # Take the mean (e.g., of variances), to avoid a scenario where any single group's variance is 0
+    S_within = (var_group1 + var_group2) / 2
 
-    # Prevent S_within (e.g., within-group sum of squares or variance) from being too small to avoid division by zero errors
-    epsilon = 1e-8  # Set a small constant (epsilon) to prevent the denominator from being too small
+    # Prevent S_within
+    epsilon = 1e-8
     S_within = max(S_within, epsilon)
-
-    # Calculate the F-statistic
     F_stat = S_between / S_within
 
     return F_stat
-
-def compute_f_tight_statistic(df_weights, group1="g1", group2="g2"):
-    """
-    Calculates a simplified F-statistic and its corresponding p-value
-
-    Parameters:
-    - df_weights: A DataFrame containing 'Group' and 'mean' columns
-    - group1, group2: The name of the first group
-
-    Returns:
-    - F_stat: The calculated simplified F-statistic
-    - p_value: The right-tailed probability (p-value) for the F-statistic
-    """
-
-    # sort
-    df_weights = df_weights.sort_values(by=["Chr_Pos", "Group"]).reset_index(drop=True)
-
-    # Get within-group means
-    group1_vals = df_weights[df_weights["Group"] == group1]["mean"]
-    group2_vals = df_weights[df_weights["Group"] == group2]["mean"]
-
-    mean1 = group1_vals.mean()
-    mean2 = group2_vals.mean()
-
-    # Simplified between-group 'variance' = squared difference (can also be defined using sum of squares)
-    S_between = (mean1 - mean2)**2
-
-    # Within-group variance (standard method)
-    var1 = group1_vals.var(ddof=1)
-    var2 = group2_vals.var(ddof=1)
-    S_within = (var1 + var2) / 2
-
-    # Avoid division by zero
-    epsilon = 1e-8
-    S_within = max(S_within, epsilon)
-
-    # F data
-    F_stat = S_between / S_within
-
-    # Degrees of freedom
-    df1 = 1
-    df2 = len(group1_vals) + len(group2_vals) - 2
-
-    # Calculate p-value(right-tailed)
-    p_value = f.sf(F_stat, df1, df2)
-
-    return F_stat, p_value
-
-
 
 def run_weighted_beta_regression(df_summary, threshold=5, group1="g1", group2="g2", f_value=15):
     """
@@ -353,13 +246,10 @@ def run_weighted_beta_regression(df_summary, threshold=5, group1="g1", group2="g
     
     # Calculate Beta parameters
     df_beta = compute_beta_params(df_summary, group1=group1, group2=group2)
-    #print(df_beta) 
-    # Calculate weights
     df_weights = compute_weights(df_beta, df_summary, group1=group1, group2=group2)
 
-
     # Calculate the F-statistic
-    p_value, delta_mu, g1_beta, g2_beta, F_stat = mle_beta_regression(df_weights, df_summary, group1=group1, group2=group2, f_value=f_value)  # ✅ 使用 df_weights
+    p_value, delta_mu, g1_beta, g2_beta, F_stat = mle_beta_regression(df_weights, df_summary, group1=group1, group2=group2, f_value=f_value)
     is_DMR = (p_value < 0.05) and (F_stat > f_value)
 
     return {
@@ -373,14 +263,9 @@ def run_weighted_beta_regression(df_summary, threshold=5, group1="g1", group2="g
 
    
 if __name__ == "__main__":
-    # Generate simulated data (wide format + statistical information)
+    # Generate simulated data
     df_wide, df_summary = generate_simulated_data()
-    print(df_wide.head(10))
-    print(df_summary)
-    # Run WBR and output the results
     results = run_weighted_beta_regression(df_summary)
-    
-    # Print result
     print("Results:")
     for key, value in results.items():
         print(f"{key}: {value}")

@@ -22,30 +22,29 @@ def generate_methylation_data(chr_name="chr1", num_points=1000, coverage_range=(
     Returns：
     - pandas DataFrame:A DataFrame with columns: 'Chr', 'Pos', 'Meth_Level', 'Coverage'
     """
-    np.random.seed()  # Ensure each call produces different random data
+    np.random.seed()
 
     # Calculate the number of sites for the 80% and 20% portions
     num_fixed = int(num_points * 0.8)
     num_random = num_points - num_fixed
 
-    # 1. **80% fixed sites**（selected from the pre-generated BASE_CPG_SITES）
+    # 80% fixed sites (selected from the pre-generated BASE_CPG_SITES)
     fixed_positions = np.random.choice(BASE_CPG_SITES, num_fixed, replace=False)
 
-    # 2. **20% randomly generated sites**
+    # 20% randomly generated sites
     random_positions = np.random.randint(1, 1_000_000, size=num_random)
 
-    # 3. **Merge and sort**
+    # Merge and sort
     all_positions = np.sort(np.concatenate([fixed_positions, random_positions]))
 
-    # 4. **Generate random methylation levels**
+    # Generate random methylation levels
     meth_levels = np.random.uniform(meth_range[0], meth_range[1], size=num_points)
 
-    # 5. **Generate coverage (simulated using a Gamma distribution)**
+    # Generate coverage (simulated using a Gamma distribution)
     shape, scale = 2, 5  # Gamma distribution parameters; a right-skewed distribution to simulate actual sequencing depth
     coverage = np.random.gamma(shape, scale, size=num_points).astype(int)
-    coverage = np.clip(coverage, coverage_range[0], coverage_range[1])  # Limit the coverage range
+    coverage = np.clip(coverage, coverage_range[0], coverage_range[1])
 
-    # 6. **Assemble DataFrame**
     df = pd.DataFrame({
         "Chr": [chr_name] * num_points,
         "Pos": all_positions,
@@ -59,13 +58,13 @@ def simulate_multiple_samples(output_folder, group1_count=5, group2_count=5, chr
     """
     Generates CpG methylation data for multiple samples, organizes them by group1 and group2, and saves the data to a file
 
-    参数：
+    Parameter:
     - group1_count: The number of samples in group1
     - group2_count: The number of samples in group2
     - chr_name: The chromosome name
     - num_points: The number of data points to generate per sample
 
-    返回：
+    Return:
     - List[Dict] A list of dictionaries. Each dictionary represents a sample and contains keys: 'sample' (sample identifier), 'group' (group identifier), and 'data' (the corresponding CpG methylation data)
     """
     samples = []
@@ -107,198 +106,8 @@ def simulate_multiple_samples(output_folder, group1_count=5, group2_count=5, chr
     with open(inlab_path, 'w') as f:
         f.write("\n".join(inlab_records))
 
-    print(f"[✔] inlab.txt write to: {inlab_path}")
-
+    print(f" inlab.txt write to: {inlab_path}")
     return samples
-
-# KNN + weighting method
-def fill_low_coverage_cpg_knn(df, coverage_threshold=5, n_neighbors=3):
-    """
-    Performs k-Nearest Neighbors (KNN) imputation combined with weighted fusion on low-coverage CpG sites
-
-    Parameters：
-        - df:  Input DataFrame containing the columns 'Chr', 'Pos', 'Meth_Level', and 'Coverage'
-        - coverage_threshold: The threshold for defining low coverage
-        - n_neighbors: The number of nearest neighbors for KNN
-
-    Returns：
-        - pandas.DataFrame: The input DataFrame with an added 'Final_Meth_Level' column, representing the imputed/fused methylation levels
-    """
-    if df.empty or df["Meth_Level"].dropna().empty:
-        # Empty table or the 'Meth_Level' column is entirely empty/null
-        df = df.copy()
-        df["Final_Meth_Level"] = pd.Series(dtype=float)
-        df["Weight"] = pd.Series(dtype=int)
-        return df
-
-    df = df.copy()
-    print(df)
-    # Ensure numerical columns are of float type
-    df["Coverage"] = pd.to_numeric(df["Coverage"], errors="coerce")
-    df["Meth_Level"] = pd.to_numeric(df["Meth_Level"], errors="coerce")
-
-    # Generate an imputed version
-    df_knn = df.copy()
-    low_cov_mask = df["Coverage"] < coverage_threshold
-    print(low_cov_mask)
-    print(df_knn)
-    # KNN imputation
-    imputer = KNNImputer(n_neighbors=n_neighbors)
-    df["Meth_Level_KNN"] = imputer.fit_transform(df_knn[["Meth_Level"]])
-
-    # Merge imputed values and original values
-    df["Weight"] = np.clip(df["Coverage"] / coverage_threshold, 0, 1)
-    df["Final_Meth_Level"] = (
-        df["Weight"] * df["Meth_Level"] + (1 - df["Weight"]) * df["Meth_Level_KNN"]
-    )
-
-    # Limit to the 0-1 range
-    df["Final_Meth_Level"] = df["Final_Meth_Level"].clip(0, 1)
-    print(df)
-    return df
-
-# Adopt a distance + weighting method
-def fill_low_coverage_cpg(df, coverage_threshold=5, max_distance=500):
-    """
-    Smoothly imputes low-coverage CpG sites using a combination of a distance-weighted average (from neighbors) and weighted fusion with the site's current value
-
-    Parameters:
-    - df: DataFrame: Input DataFrame containing the columns 'Chr', 'Pos', 'Meth_Level', and 'Coverage'
-    - coverage_threshold: The threshold used to define low coverage
-    - max_distance: The maximum distance to consider for neighbors
-
-    Returns:
-    - pandas.DataFrame: The input DataFrame with an added 'Final_Meth_Level' column. This column's values are the result of fusing the original (current) methylation level with a predicted level derived from its neighbors
-    """
-    df = df.copy()
-    df = df.sort_values("Pos").reset_index(drop=True)
-
-    # Type conversion
-    df["Coverage"] = pd.to_numeric(df["Coverage"], errors="coerce")
-    df["Meth_Level"] = pd.to_numeric(df["Meth_Level"], errors="coerce")
-    df["Pos"] = pd.to_numeric(df["Pos"], errors="coerce")
-    df["Final_Meth_Level"] = df["Meth_Level"]
-
-    rows_to_drop = []
-
-    for i in range(len(df)):
-        coverage = df.at[i, "Coverage"]
-        beta_i = df.at[i, "Meth_Level"]
-
-        if pd.isna(beta_i):
-            continue  # Truly missing, skip (you can add a dedicated strategy for handling)
-
-        if coverage >= coverage_threshold:
-            continue  # For high coverage, retain the original value
-
-        pos_i = df.at[i, "Pos"]
-
-        # Find preceding and succeeding neighbors
-        prev = next((j for j in range(i - 1, -1, -1)
-                     if pd.notna(df.at[j, "Meth_Level"])), None)
-        next_ = next((j for j in range(i + 1, len(df))
-                      if pd.notna(df.at[j, "Meth_Level"])), None)
-
-        if prev is None or next_ is None:
-            rows_to_drop.append(i)
-            continue  # If one side (of neighbors) is missing, do not impute
-
-        # Distance calculation
-        d1 = abs(pos_i - df.at[prev, "Pos"])
-        d2 = abs(df.at[next_, "Pos"] - pos_i)
-
-        if d1 > max_distance or d2 > max_distance:
-            rows_to_drop.append(i)  # If the distance is large, it will not be included in subsequent calculations
-            continue  # Exceeds distance limit
-
-        # Neighbor value
-        beta1 = df.at[prev, "Meth_Level"]
-        beta2 = df.at[next_, "Meth_Level"]
-        beta_hat = (beta1 / d1 + beta2 / d2) / (1/d1 + 1/d2)
-
-        # Fuse with the current value
-        w = min(1.0, coverage / coverage_threshold)
-        beta_final = w * beta_i + (1 - w) * beta_hat
-
-        df.at[i, "Final_Meth_Level"] = np.clip(beta_final, 0, 1)
-
-    # Delete rows that cannot be imputed
-    df = df.drop(index=rows_to_drop).reset_index(drop=True)
-    return df
-
-# Speed up
-def fill_low_coverage_cpg_fast(df, coverage_threshold=5, max_distance=500):
-    """
-    For CpG data that has no missing values, this function applies GIMMEcpg neighbor weighted imputation (highly optimized version)
-
-    Parameters:
-    - df: Input DataFrame containing the columns 'Chr', 'Pos', 'Meth_Level', and 'Coverage'
-    - coverage_threshold: The coverage threshold
-    - max_distance: The maximum distance to consider for neighbors during imputation
-
-    Returns:
-    - The DataFrame with an added 'Final_Meth_Level' column. Rows with low coverage that could not be imputed will have been deleted
-    """
-    df = df.copy()
-    df = df.sort_values("Pos").reset_index(drop=True)
-
-    df["Coverage"] = pd.to_numeric(df["Coverage"], errors="coerce")
-    df["Meth_Level"] = pd.to_numeric(df["Meth_Level"], errors="coerce")
-    df["Pos"] = pd.to_numeric(df["Pos"], errors="coerce")
-    df["Final_Meth_Level"] = df["Meth_Level"]
-
-    pos_arr = df["Pos"].values
-    meth_arr = df["Meth_Level"].values
-    coverage_arr = df["Coverage"].values
-
-    rows_to_drop = []
-
-    for i in range(len(df)):
-        coverage = coverage_arr[i]
-        beta_i = meth_arr[i]
-
-        if coverage >= coverage_threshold:
-            continue  # High coverage: do not process
-
-        pos_i = pos_arr[i]
-
-        # Find the previous point (i-1)
-        prev = i - 1 if i > 0 else -1
-        next_ = i + 1 if i < len(df) - 1 else -1
-
-        if prev == -1 or next_ == -1:
-            rows_to_drop.append(i)
-            continue
-
-        d1 = abs(pos_i - pos_arr[prev])
-        d2 = abs(pos_arr[next_] - pos_i)
-
-        if d1 > max_distance or d2 > max_distance:
-            rows_to_drop.append(i)
-            continue
-
-        # Interpolate
-        beta1 = meth_arr[prev]
-        beta2 = meth_arr[next_]
-
-        # Avoid division by zero
-        if d1 == 0 and d2 == 0:
-            rows_to_drop.append(i)
-            continue
-        elif d1 == 0:
-            beta_hat = beta1
-        elif d2 == 0:
-            beta_hat = beta2
-        else:
-            beta_hat = (beta1 / d1 + beta2 / d2) / (1 / d1 + 1 / d2)
-
-        # Fuse with the current value
-        w = min(1.0, coverage / coverage_threshold)
-        beta_final = w * beta_i + (1 - w) * beta_hat
-        df.at[i, "Final_Meth_Level"] = np.clip(beta_final, 0, 1)
-
-    df = df.drop(index=rows_to_drop).reset_index(drop=True)
-    return df
 
 @njit
 def _fill_low_cov_numba(pos_arr, meth_arr, coverage_arr, threshold, max_dist):
@@ -311,7 +120,7 @@ def _fill_low_cov_numba(pos_arr, meth_arr, coverage_arr, threshold, max_dist):
         beta_i = meth_arr[i]
 
         if cov >= threshold:
-            continue  # High coverage: do not process
+            continue 
 
         pos_i = pos_arr[i]
 
@@ -333,7 +142,6 @@ def _fill_low_cov_numba(pos_arr, meth_arr, coverage_arr, threshold, max_dist):
         beta1 = meth_arr[prev]
         beta2 = meth_arr[next_]
 
-        # Error handling when distance is zero
         if d1 == 0 and d2 == 0:
             drop_mask[i] = True
             continue
@@ -371,51 +179,11 @@ def fill_low_coverage_cpg_numba(df, coverage_threshold=5, max_distance=500):
     meth_arr = pd.to_numeric(df["Meth_Level"], errors="coerce").values.astype(np.float64)
     cov_arr = pd.to_numeric(df["Coverage"], errors="coerce").values.astype(np.float64)
 
-    final_arr, drop_mask = _fill_low_cov_numba(pos_arr, meth_arr, cov_arr,
-                                                coverage_threshold, max_distance)
+    final_arr, drop_mask = _fill_low_cov_numba(pos_arr, meth_arr, cov_arr, coverage_threshold, max_distance)
 
     df["Final_Meth_Level"] = final_arr
     df = df.loc[~drop_mask].reset_index(drop=True)
     return df
-
-# Single-sample serial processing
-def process_samples_old(sample_data, coverage_threshold=5, max_distance=500):
-    """
-    Sequentially processes the data for each sample by performing K-Nearest Neighbors (KNN) smoothing
-
-    Parameters:
-    - sample_data: List[Dict],A list of dictionaries, where each dictionary contains keys 'sample', 'group', and 'data'. The 'data' key typically holds the sample's measurement data
-    - coverage_threshold: The threshold for defining low coverage
-    - n_neighbors: The number of nearest neighbors to use for KNN
-
-    Returns:
-    - List[Dict]:A list of dictionaries with the same structure as the original sample_data, but where the value associated with the 'data' key is the DataFrame after processing (KNN smoothing)
-    """
-    processed_results = []
-
-    for entry in sample_data:
-        sample = entry['sample']
-        group = entry['group']
-        df = entry['data']
-
-        try:
-            processed_df = fill_low_coverage_cpg_numba(df, coverage_threshold, max_distance)
-            print(f"{sample} belongs to {group} has finished")
-            processed_results.append({
-                'sample': sample,
-                'group': group,
-                'data': processed_df
-            })
-        except Exception as e:
-            print(f"[] 样本 {sample} 处理失败: {e}")
-            # If fail return DataFrame
-            processed_results.append({
-                'sample': sample,
-                'group': group,
-                'data': pd.DataFrame()
-            })
-
-    return processed_results
 
 def process_samples(sample_data, coverage_threshold=5, max_distance=500):
     """
@@ -473,47 +241,16 @@ def process_samples_parallel(sample_data, coverage_threshold=5, max_distance=500
         df = entry['data']
         try:
             processed_df = fill_low_coverage_cpg_numba(df, coverage_threshold, max_distance)
-            print(f"✅ {sample} 插补完成")
+            print(f"Success: {sample} has completed")
             return {'sample': sample, 'group': group, 'data': processed_df}
         except Exception as e:
-            print(f"❌ {sample} 处理失败: {e}")
+            print(f"Failure: {sample} has an error: {e}")
             return {'sample': sample, 'group': group, 'data': pd.DataFrame()}
 
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
-        results = list(executor.map(process_one, sample_data))  # Preserve order
+        results = list(executor.map(process_one, sample_data))
 
     return results
-
-def merge_samples_fast_old(processed_samples, sample_order):
-    """
-    Merges data from all samples using an optimized (faster) method. This process ensures alignment based on Pos (position) values, and fills with NaN where a sample lacks data for a specific Pos.
-    
-    Parameters:
-    - processed_samples: Sample data that has been processed. This is typically in a dictionary format(e.g., a dictionary mapping sample names to their data, or a list of dictionaries each pertaining to a sample).
-    - sample_order: A list specifying the desired order of sample names, which often dictates the column order in the output DataFrame.
-
-    Returns:
-    - The processed DataFrame containing the merged and aligned data from all samples, where missing values are represented as NaN
-    """
-    # **1 Extract all Pos positions**
-    all_positions = set()
-    for df in processed_samples.values():
-        all_positions.update(df["Pos"])
-
-    # **2 Unify `Pos`**
-    all_positions = sorted(all_positions)
-    base_df = pd.DataFrame({"Pos": all_positions})
-
-    # **3 Use merge() to align by Pos, filling missing values with NaN**
-    for sample_id in sample_order:
-        sample_df = processed_samples[sample_id][["Pos", "Final_Meth_Level"]].copy()
-        sample_df["Final_Meth_Level"] = sample_df["Final_Meth_Level"].round(4)  # **Keep 4 decimal places**
-        sample_df.rename(columns={"Final_Meth_Level": sample_id}, inplace=True)
-        base_df = base_df.merge(sample_df, on="Pos", how="left")  # `left join`，Ensure Pos values are unified
-
-    base_df.insert(0, "Chr", processed_samples[sample_order[0]]["Chr"].iloc[0])  # Insert a Chr column
-
-    return base_df
 
 def merge_samples_fast(processed_samples: dict) -> pd.DataFrame:
     """
@@ -526,7 +263,7 @@ def merge_samples_fast(processed_samples: dict) -> pd.DataFrame:
         - The merged DataFrame, which includes 'Chr' and 'Pos' columns, as well as a 'Final_Meth_Level' column for each individual sample
     """
     if not processed_samples:
-        raise ValueError("processed_samples 为空")
+        raise ValueError("processed_samples is Empty")
 
     all_positions = sorted(
         set(int(pos) for entry in processed_samples for pos in entry['data']["Pos"])
@@ -542,34 +279,17 @@ def merge_samples_fast(processed_samples: dict) -> pd.DataFrame:
         df.rename(columns={"Final_Meth_Level": sample_id}, inplace=True)
         base_df = base_df.merge(df, on="Pos", how="left")
 
-    # Insert a 'Chr' column (assuming all samples are from the same chromosome)
     chr_name = processed_samples[0]['data']["Chr"].iloc[0]
     base_df.insert(0, "Chr", chr_name)
-
     return base_df
 
-
-
-
 if __name__ == "__main__":
-    
-    output_folder = "/home/ly/shell/deepDMR/data/simulate_sample_data/raw2"
-    os.makedirs(output_folder, exist_ok=True)  # If the folder does not exist, then create it
-    
+    output_folder = "./test"
+    os.makedirs(output_folder, exist_ok=True)  
     num_sample = 10
     chr_name = "chr1"
     num_points = 1000
-    samples = simulate_multiple_samples(output_folder=output_folder,
-                                        group1_count=5, group2_count=5)
-
-
-    num_threads = 4
+    samples = simulate_multiple_samples(output_folder=output_folder, group1_count=5, group2_count=5)
     processed_samples = process_samples(samples, coverage_threshold=5, max_distance=500)
-
-    print(processed_samples[0]['data'][['Chr', 'Pos', 'Meth_Level', 'Coverage', 'Final_Meth_Level']].head())
     merged_df = merge_samples_fast(processed_samples)
-    print(merged_df.head())
-
     merged_df.to_csv(os.path.join(output_folder,"merge.txt"), sep='\t',index=False)
-
-
