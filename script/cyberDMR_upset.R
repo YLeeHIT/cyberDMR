@@ -2,11 +2,11 @@ library(GenomicRanges)
 library(ComplexUpset)
 library(ggVennDiagram)
 
-cyber <- read.table("~/project/methDmr/real-data/prostate_cancer/GSE158927/result/cyberDMR.bed", header = FALSE)
-metilene <- read.table("~/project/methDmr/real-data/prostate_cancer/GSE158927/result/metilene.bed", header = FALSE)
-bsmooth <- read.table("~/project/methDmr/real-data/prostate_cancer/GSE158927/result/bsmooth.bed", header = FALSE)
-home <- read.table("~/project/methDmr/real-data/prostate_cancer/GSE158927/result/home.bed", header = FALSE, sep = '\t')
-benchmark <- read.table("~/project/methDmr/real-data/prostate_cancer/GSE158927/result/benchmark.bed", header = FALSE, sep = '\t')
+cyber <- read.table("../data/real_data/GSE158927/cyberDMR.bed", header = FALSE)
+metilene <- read.table("../data/real_data/GSE158927/metilene.bed", header = FALSE)
+bsmooth <- read.table("../data/real_data/GSE158927/bsmooth.bed", header = FALSE)
+home <- read.table("../data/real_data/GSE158927/home.bed", header = FALSE, sep = '\t')
+benchmark <- read.table("../data/real_data/GSE158927/benchmark.bed", header = FALSE, sep = '\t')
 
 gr_cyber <- GRanges(seqnames = cyber$V1, ranges = IRanges(start = cyber$V2, end = cyber$V3))
 gr_metilene <- GRanges(seqnames = metilene$V1, ranges = IRanges(start = metilene$V2, end = metilene$V3))
@@ -22,7 +22,6 @@ sum(df$HOME)
 sum(df$BSmooth)
 sum(df$Benchmark)
 
-
 df <- data.frame(
   cyberDMR = countOverlaps(all_regions, gr_cyber) > 0,
   Metilene = countOverlaps(all_regions, gr_metilene) > 0,
@@ -34,9 +33,7 @@ df <- data.frame(
 upset(df, intersect = c("cyberDMR", "Metilene", "BSmooth", "HOME", "Benchmark"),
       name = "DMR detection overlap")
 
-
 upset(df, intersect = c("cyberDMR", "Benchmark"))
-
 
 p_upset <- upset(
   df,
@@ -49,27 +46,14 @@ p_upset <- upset(
   width_ratio = 0.4
 ) +
   theme(  
-    axis.text.x = element_blank(), # x-axis text
-    axis.text.y = element_text(size = 14), # y-axis text
-    strip.text = element_text(size = 16), # Labels for intersection combinations
+    axis.text.x = element_blank(), 
+    axis.text.y = element_text(size = 14), 
+    strip.text = element_text(size = 16),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank()
   ) 
 
 p_upset
-
-ggsave("/home/user/liyang/project/methDmr/plot/upset_9.6_3.8_test.jpg",p_upset, width =9.6, height = 3.8, dpi = 300,units = "in")
-
-
-
-
-
-table(df$cyberDMR, df$Benchmark)
-table(df$cyberDMR, df$Metilene)
-table(df$cyberDMR, df$HOME)
-table(df$cyberDMR, df$BSmooth)
-
-
 
 # venn --------------------------------------------------------------------
 
@@ -88,5 +72,4 @@ p_venn <- ggVennDiagram(venn_list, label_alpha = 0, label = "count", label_size 
 
 p_venn
 
-ggsave("/home/user/liyang/project/methDmr/plot/venn_3_2.5_plot3.jpg",p_venn, width =3.5, height = 2.5, dpi = 300,units = "in")
 
