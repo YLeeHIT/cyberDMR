@@ -70,6 +70,7 @@ This file should be a **tab-separated** text file with **three columns**:
 3. **Absolute path to the BED-format methylation file**
 
 Example (`in_cyber.lab`):
+```
 139C lethal /absolute/path/to/noh_lethal_139C_auto.bed
 1601C lethal /absolute/path/to/noh_lethal_1601C_auto.bed
 349C lethal /absolute/path/to/noh_lethal_349C_auto.bed
@@ -81,7 +82,7 @@ Example (`in_cyber.lab`):
 448N normal /absolute/path/to/noh_normal_448N_auto.bed
 508N normal /absolute/path/to/noh_normal_508N_auto.bed
 564N normal /absolute/path/to/noh_normal_564N_auto.bed
-
+```
 **Note:** Ensure all paths are absolute (not relative), and that group names match the `--group1` and `--group2` arguments when running `cyberDMR.py`.
 Once ready, you can run cyberDMR as follows:
 ```bash
