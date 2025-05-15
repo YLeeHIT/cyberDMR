@@ -1,6 +1,6 @@
 #!/bin/bash
 # Example:
-#   bash ./real_cyberDMR.sh treatment control 1
+#   bash ./run_simulate_cyberDMR.sh treatment control 1
 group1=$1
 group2=$2
 threads=$3
