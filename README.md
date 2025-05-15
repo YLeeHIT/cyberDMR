@@ -60,8 +60,6 @@ To generate input files in formats compatible with **cyberDMR**, **Metilene**, *
 bash merge_simulates_samples.sh -o ../data/simulate_data
 ```
 
-
-
 ## Run cyberDMR
 After generating the simulated methylation data, you can run **cyberDMR** to detect DMRs between two groups:
 

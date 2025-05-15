@@ -22,11 +22,11 @@ dmr_sub_per=0
 density="mix"
 dense_ratio=0.3
 seed=42
-threads=1   # only use for cyberDMR
+threads=1
 simulate_py="./simulated_data.py"
 merge_sh="./merage_simulated_samples.sh"
 detect_sh="./detect_DMR.sh"
-integrate_sh="./integrate_data.sh"
+cyberDMR_sh="./run_simulate_cyberDMR.sh"
 
 
 # Help function
@@ -116,11 +116,10 @@ bash ${merge_sh} ${output_dir}
 
 # Step Three: detect DMR
 echo "Step Three: Detect DMRs"
-#bash ${detect_sh} ${output_dir} ${chr_name} ${threads} all
-
-# Step Four: integrate result
-echo "Step Four: Integrate result"
-#bash ${integrate_sh} ${output_dir}
+group1="treatment"
+group2="control"
+threads=4
+bash ${cyberDMR_sh} ${group1} ${group2} ${threads}
 
 echo "##### All process has finished #####"
 

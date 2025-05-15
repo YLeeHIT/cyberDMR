@@ -2,11 +2,11 @@ library(GenomicRanges)
 library(ComplexUpset)
 library(ggVennDiagram)
 
-cyber <- read.table("../data/real_data/GSE158927/cyberDMR.bed", header = FALSE)
-metilene <- read.table("../data/real_data/GSE158927/metilene.bed", header = FALSE)
-bsmooth <- read.table("../data/real_data/GSE158927/bsmooth.bed", header = FALSE)
-home <- read.table("../data/real_data/GSE158927/home.bed", header = FALSE, sep = '\t')
-benchmark <- read.table("../data/real_data/GSE158927/benchmark.bed", header = FALSE, sep = '\t')
+cyber <- read.table("../data/real_data/cyberDMR.bed", header = FALSE)
+metilene <- read.table("../data/real_data/metilene.bed", header = FALSE)
+bsmooth <- read.table("../data/real_data/bsmooth.bed", header = FALSE)
+home <- read.table("../data/real_data/home.bed", header = FALSE, sep = '\t')
+benchmark <- read.table("../data/real_data/benchmark.bed", header = FALSE, sep = '\t')
 
 gr_cyber <- GRanges(seqnames = cyber$V1, ranges = IRanges(start = cyber$V2, end = cyber$V3))
 gr_metilene <- GRanges(seqnames = metilene$V1, ranges = IRanges(start = metilene$V2, end = metilene$V3))
@@ -29,6 +29,8 @@ df <- data.frame(
   HOME = countOverlaps(all_regions, gr_home) > 0,
   Benchmark = countOverlaps(all_regions, gr_benchmark) > 0
 )
+
+# upset --------------------------------------------------------------------
 
 upset(df, intersect = c("cyberDMR", "Metilene", "BSmooth", "HOME", "Benchmark"),
       name = "DMR detection overlap")
@@ -71,5 +73,3 @@ p_venn <- ggVennDiagram(venn_list, label_alpha = 0, label = "count", label_size 
   scale_fill_gradientn(colors = c("grey", "grey", "grey"))
 
 p_venn
-
-
