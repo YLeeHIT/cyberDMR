@@ -83,14 +83,27 @@ Example (`in_cyber.lab`):
 508N normal /absolute/path/to/noh_normal_508N_auto.bed
 564N normal /absolute/path/to/noh_normal_564N_auto.bed
 ```
+
+To build an inlab file, you can refer to the following instructions:
+```bash
+cd ./cyberDMR/data/real_data/chr22
+ls noh_lethal_*bed noh_normal_*bed > ./cyberDMR_result/raw.lab
+awk -v dir=$(pwd) '{split($1,y,"_");print y[3]"\t"y[2]"\t"dir"/"$1}' ./cyberDMR_result/raw.lab > ./cyberDMR_result/in_cyber.lab
+```
+
 **Note:** Ensure all paths are absolute (not relative), and that group names match the `--group1` and `--group2` arguments when running `cyberDMR.py`.
 Once ready, you can run cyberDMR as follows:
 ```bash
-python cyberDMR.py \
-    --out_dir /mnt/data/sample_outputs/results \
+python ~/cyberDMR/script/cyberDMR.py \
+    --out_dir ~/cyberDMR/data/real_data/chr22/cyberDMR_result \
     --threads 4 \
-    --group1 control \
-    --group2 treatment
+    --group1 lethal \
+    --group2 normal
+```
+
+If you want to obtain all chromosome files, you can refer to the following instructions:
+```
+cat ./chr*txt |sort -k1,1V -k2,2n -k3,3n > final_result.txt 
 ```
 
 ### Quick Start (Recommended)
