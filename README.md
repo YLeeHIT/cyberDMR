@@ -85,7 +85,7 @@ Example (`in_cyber.lab`):
 ```
 
 To build an inlab file, you can refer to the following instructions:
-```bash
+```
 cd ./cyberDMR/data/real_data/chr22
 ls noh_lethal_*bed noh_normal_*bed > raw.lab
 awk -v dir=$(pwd) '{split($1,y,"_");print y[3]"\t"y[2]"\t"dir"/"$1}' raw.lab > in_cyber.lab
@@ -129,7 +129,7 @@ bash ./simulate_data.sh -h
 If you use cyberDMR in your research, please cite:
 
 ```bibtex
-@article{li2025cyberdmr,
+@article{
     title={cyberDMR: a robust and high-sensitivity approach for differentially methylated regions detection},
     author={Li, Yang and others},
     journal={Bioinformatics},
