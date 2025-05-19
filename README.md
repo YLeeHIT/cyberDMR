@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-linux%20|%20macOS-brightgreen)
 
-**cyberDMR** is a robust and high-resolution framework for detecting differentially methylated regions from whole-genome sequencing data.
+**cyberDMR** is a robust and high-sensitivity approach for differentially methylated regions detection.
 
 ### Introduction
 Differentially methylated regions (DMRs) are key genomic features reflecting changes in DNA methylation status. Accurate identification of DMRs is crucial for investigating tissue-specific regulation, disease mechanisms, and population-level epigenetic variation.
