@@ -7,17 +7,17 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-linux%20|%20macOS-brightgreen)
 
-**cyberDMR** is a robust and high-resolution framework for detecting differentially methylated regions (DMRs) from whole-genome bisulfite sequencing (WGBS) data.
+**cyberDMR** is a robust and high-resolution framework for detecting differentially methylated regions from whole-genome sequencing data.
 
 ### Introduction
-Differentially methylated regions (DMRs) are key genomic features reflecting changes in DNA methylation status. Accurate identification of DMRs is crucial for investigating tissue-specific regulation, disease mechanisms, and population-level epigenetic variation. However, existing tools encounter difficulties when applied to increasingly complex WGS datasets.
+Differentially methylated regions (DMRs) are key genomic features reflecting changes in DNA methylation status. Accurate identification of DMRs is crucial for investigating tissue-specific regulation, disease mechanisms, and population-level epigenetic variation.
 
 ### Features
 - Base-level smoothing for low-coverage CpGs
+- CpG segmentation based on genomic distance and methylation concordance
 - Seed-guided clustering for consistent CpG grouping
 - Weighted beta regression with LRT for statistical inference
-- Supports both simulated and real datasets
-- Benchmark-ready and highly scalable
+- Identifiying significant DMRs via BH correction and F-statitics
 
 # Running cyberDMR
 
@@ -71,37 +71,37 @@ This file should be a **tab-separated** text file with **three columns**:
 
 Example (`in_cyber.lab`):
 ```
-139C lethal /absolute/path/to/noh_lethal_139C_auto.bed
-1601C lethal /absolute/path/to/noh_lethal_1601C_auto.bed
-349C lethal /absolute/path/to/noh_lethal_349C_auto.bed
-379C lethal /absolute/path/to/noh_lethal_379C_auto.bed
-46C lethal /absolute/path/to/noh_lethal_46C_auto.bed
-514C lethal /absolute/path/to/noh_lethal_514C_auto.bed
-564C lethal /absolute/path/to/noh_lethal_564C_auto.bed
-1601N normal /absolute/path/to/noh_normal_1601N_auto.bed
-448N normal /absolute/path/to/noh_normal_448N_auto.bed
-508N normal /absolute/path/to/noh_normal_508N_auto.bed
-564N normal /absolute/path/to/noh_normal_564N_auto.bed
+139C    lethal  /absolute/path/to/noh_lethal_139C_auto.bed
+1601C   lethal  /absolute/path/to/noh_lethal_1601C_auto.bed
+349C    lethal  /absolute/path/to/noh_lethal_349C_auto.bed
+379C    lethal  /absolute/path/to/noh_lethal_379C_auto.bed
+46C lethal  /absolute/path/to/noh_lethal_46C_auto.bed
+514C    lethal  /absolute/path/to/noh_lethal_514C_auto.bed
+564C    lethal  /absolute/path/to/noh_lethal_564C_auto.bed
+1601N   normal  /absolute/path/to/noh_normal_1601N_auto.bed
+448N    normal  /absolute/path/to/noh_normal_448N_auto.bed
+508N    normal  /absolute/path/to/noh_normal_508N_auto.bed
+564N    normal  /absolute/path/to/noh_normal_564N_auto.bed
 ```
 
 To build an inlab file, you can refer to the following instructions:
 ```bash
 cd ./cyberDMR/data/real_data/chr22
-ls noh_lethal_*bed noh_normal_*bed > ./cyberDMR_result/raw.lab
-awk -v dir=$(pwd) '{split($1,y,"_");print y[3]"\t"y[2]"\t"dir"/"$1}' ./cyberDMR_result/raw.lab > ./cyberDMR_result/in_cyber.lab
+ls noh_lethal_*bed noh_normal_*bed > raw.lab
+awk -v dir=$(pwd) '{split($1,y,"_");print y[3]"\t"y[2]"\t"dir"/"$1}' raw.lab > in_cyber.lab
 ```
 
 **Note:** Ensure all paths are absolute (not relative), and that group names match the `--group1` and `--group2` arguments when running `cyberDMR.py`.
 Once ready, you can run cyberDMR as follows:
 ```bash
-python ~/cyberDMR/script/cyberDMR.py \
-    --out_dir ~/cyberDMR/data/real_data/chr22/cyberDMR_result \
+python cyberDMR.py \
+    --out_dir cyberDMR_result \
     --threads 4 \
     --group1 lethal \
     --group2 normal
 ```
 
-If you want to obtain all chromosome files, you can refer to the following instructions:
+If you want to merge all chromosome files, you can refer to the following instructions:
 ```
 cat ./chr*txt |sort -k1,1V -k2,2n -k3,3n > final_result.txt 
 ```
@@ -127,6 +127,8 @@ bash ./simulate_data.sh -h
 **Status:** Initial release
 
 If you use cyberDMR in your research, please cite:
+
+```bibtex
 @article{li2025cyberdmr,
     title={cyberDMR: a robust and high-sensitivity approach for differentially methylated regions detection},
     author={Li, Yang and others},
@@ -134,9 +136,12 @@ If you use cyberDMR in your research, please cite:
     year={2025},
     note={Manuscript under review}
 }
+```
 
 # Contributors
 
 This package is developed and maintaned by [Lee](https://github.com/YLeeHIT) and [Chen](https://github.com/chong-hun). If you want to contribute, please leave an issue or submit a pull request. Thank you.
 
 # License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
