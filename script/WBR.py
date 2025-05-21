@@ -191,7 +191,7 @@ def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_valu
         # Calculate the true methylation level difference Δμ
         mu_C = np.exp(beta_0) / (1 + np.exp(beta_0))
         mu_T = np.exp(beta_0 + beta_1) / (1 + np.exp(beta_0 + beta_1))
-        delta_mu = mu_C - mu_T
+        delta_mu = mu_T - mu_C
 
         # Calculate LRT p-value
         logL_full = result.llf  # Full model log-likelihood

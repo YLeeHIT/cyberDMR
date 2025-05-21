@@ -61,7 +61,7 @@ bash merge_simulates_samples.sh -o ../data/simulate_data
 ```
 
 ## Run cyberDMR
-### input requirement for cyberDMR
+### Input requirement for cyberDMR
 
 Before running `cyberDMR.py`, you need to prepare a sample information file named `in_cyber.lab`.
 This file should be a **tab-separated** text file with **three columns**:
@@ -88,7 +88,7 @@ To build an inlab file, you can refer to the following instructions:
 ```
 cd ./cyberDMR/data/real_data/chr22
 ls noh_lethal_*bed noh_normal_*bed > raw.lab
-awk -v dir=$(pwd) '{split($1,y,"_");print y[3]"\t"y[2]"\t"dir"/"$1}' raw.lab > in_cyber.lab
+awk -v dir=$(pwd) 'BEGIN{OFS="\t"}{"ID","lethal/normal",dir,$1}' raw.lab > in_cyber.lab
 ```
 
 **Note:** Ensure all paths are absolute (not relative), and that group names match the `--group1` and `--group2` arguments when running `cyberDMR.py`.
