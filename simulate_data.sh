@@ -1,8 +1,13 @@
 #!/bin/bash
-# Example:
-#   bash ./simulate_data.sh -o ../data/simulate_data -t 100
 
-# Default parameter
+# ================================================================
+# Script: simulate_data.sh
+# Description: Simulate DMR regions and run cyberDMR detection pipeline
+# ================================================================
+
+# -------------------------------
+# Default parameters
+# -------------------------------
 total_dmr=10000
 mean_delta=0.25
 n_control=10
@@ -23,40 +28,45 @@ density="mix"
 dense_ratio=0.3
 seed=42
 threads=1
-simulate_py="./simulated_data.py"
-merge_sh="./merage_simulated_samples.sh"
-detect_sh="./detect_DMR.sh"
-cyberDMR_sh="./run_simulate_cyberDMR.sh"
 
+simulate_py="./script/simulated_data.py"
+merge_sh="./script/merage_simulated_samples.sh"
+cyberDMR_sh="./script/run_simulate_cyberDMR.sh"
 
+# -------------------------------
 # Help function
+# -------------------------------
 print_help() {
-    echo "Usage: $0 [options]"
+    echo "Usage: bash $0 [options]"
+    echo ""
     echo "Options:"
-    echo " -t, --total_dmr NUM Total DMRs (default: $total_dmr)"
-    echo " -d, --mean_delta NUM Mean delta methylation (default: $mean_delta)"
+    echo " -t, --total_dmr NUM Total number of simulated DMRs (default: $total_dmr)"
+    echo " -d, --mean_delta NUM Mean methylation delta (default: $mean_delta)"
     echo " -c, --n_control NUM Number of control samples (default: $n_control)"
     echo " -e, --n_treatment NUM Number of treatment samples (default: $n_treatment)"
-    echo " -m, --coverage_mean NUM Mean coverage (default: $coverage_mean)"
+    echo " -m, --coverage_mean NUM Mean coverage depth (default: $coverage_mean)"
     echo " -s, --coverage_std NUM Coverage standard deviation (default: $coverage_std)"
     echo " -o, --output_dir PATH Output directory (default: $output_dir)"
     echo " -r, --chr_name STR Chromosome name (default: $chr_name)"
-    echo " -p, --start_pos NUM Start position (default: $start_pos)"
-    echo " -l, --length_mean NUM DMR length mean (default: $length_mean)"
-    echo " -z, --length_std NUM DMR length std (default: $length_std)"
+    echo " -p, --start_pos NUM Start position for DMR simulation (default: $start_pos)"
+    echo " -l, --length_mean NUM Mean DMR length (default: $length_mean)"
+    echo " -z, --length_std NUM Standard deviation of DMR length (default: $length_std)"
     echo " -x, --max_cpgs NUM Max CpGs per DMR (default: $max_cpgs)"
     echo " -q, --dmr_per NUM Proportion of good DMRs (default: $dmr_per)"
     echo " -n, --dmr_notable_per NUM Proportion of notable DMRs (default: $dmr_notable_per)"
     echo " -i, --dmr_inconsis_per NUM Proportion of inconsistent DMRs (default: $dmr_inconsis_per)"
     echo " -u, --dmr_sub_per NUM Proportion of sub DMRs (default: $dmr_sub_per)"
-    echo " -y, --density STR Density type: mix/dense/sparse (default: $density)"
-    echo " -a, --dense_ratio NUM Dense region ratio (default: $dense_ratio)"
+    echo " -y, --density STR Density mode: mix / dense / sparse (default: $density)"
+    echo " -a, --dense_ratio NUM Ratio of dense regions (default: $dense_ratio)"
     echo " -S, --seed NUM Random seed (default: $seed)"
-    echo " -h, --help Show help"
+    echo " -T, --threads NUM Number of threads for cyberDMR (default: $threads)"
+    echo " -h, --help Show this help message and exit"
     exit 0
 }
 
-# Parameter
+# -------------------------------
+# Parse parameters
+# -------------------------------
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t|--total_dmr) total_dmr="$2"; shift 2 ;;
@@ -79,12 +89,14 @@ while [[ $# -gt 0 ]]; do
         -a|--dense_ratio) dense_ratio="$2"; shift 2 ;;
         -S|--seed) seed="$2"; shift 2 ;;
         -h|--help) print_help ;;
-        *) echo "Unkown parameter: $1"; print_help ;;
+        *) echo "[ERROR] Unkown parameter: $1"; print_help ;;
     esac
 done
 
-# Step One: simulate data
-echo "Step One: Simulate data"
+# -------------------------------
+# Step 1: Simulate DMRs
+# -------------------------------
+echo "Step 1: Simulate data"
 python "${simulate_py}" \
     --total_dmr "$total_dmr" \
     --mean_delta "$mean_delta" \
@@ -106,20 +118,30 @@ python "${simulate_py}" \
     --dense_ratio "$dense_ratio" \
     --seed "$seed"
 
+# Record simulation summary
 parafile="${output_dir}/para.log"
 awk 'NR>1{len=$3-$2;print len"\t"$4}' ${output_dir}/DMRs.txt | \
     datamash mean 1,2 |awk '{print "\nSimulated result:\nMean(len)\t"$1"\nMean(CpGs)\t"$2}' >> ${parafile}
 
-# Step Two: merge data
-echo "Step Two: Merge data and convert format"
+# -------------------------------
+# Step 2: Merge and convert
+# -------------------------------
+echo "Step 2: Merge data and convert format"
 bash ${merge_sh} ${output_dir}
 
-# Step Three: detect DMR
-echo "Step Three: Detect DMRs"
+# -------------------------------
+# Step 3: Run cyberDMR
+# -------------------------------
+echo "Step 3: Detect DMRs"
 group1="treatment"
 group2="control"
 threads=4
 bash ${cyberDMR_sh} ${group1} ${group2} ${threads}
+    echo " -a, --dense_ratio NUM Dense region ratio (default: $dense_ratio)"
+    echo " -S, --seed NUM Random seed (default: $seed)"
+    echo " -h, --help Show help"
+    exit 0
+}
 
-echo "##### All process has finished #####"
+echo "[INFO] All processes has finished"
 

@@ -182,25 +182,34 @@ def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_valu
 
     F_stat = compute_f_statistic(df_weights, group1=group1, group2=group2)
     if F_stat > f_value:
-        model = BetaModel.from_formula("mean ~ Group", df_weights, link=sm.families.links.Logit())
-        result = model.fit()
+        try:
+            model = BetaModel.from_formula("mean ~ Group", df_weights, link=sm.families.links.Logit())
+            result = model.fit()
 
-        beta_0 = result.params["Intercept"]
-        beta_1 = result.params[f"Group[T.{group2}]"]
-        
-        # Calculate the true methylation level difference Δμ
-        mu_C = np.exp(beta_0) / (1 + np.exp(beta_0))
-        mu_T = np.exp(beta_0 + beta_1) / (1 + np.exp(beta_0 + beta_1))
-        delta_mu = mu_T - mu_C
+            beta_0 = result.params["Intercept"]
+            beta_1 = result.params[f"Group[T.{group2}]"]
+            
+            # Calculate the true methylation level difference Δμ
+            mu_C = np.exp(beta_0) / (1 + np.exp(beta_0))
+            mu_T = np.exp(beta_0 + beta_1) / (1 + np.exp(beta_0 + beta_1))
+            delta_mu = mu_T - mu_C
 
-        # Calculate LRT p-value
-        logL_full = result.llf  # Full model log-likelihood
-        model_null = BetaModel.from_formula("mean ~ 1", df_weights, link=sm.families.links.Logit())
-        result_null = model_null.fit()
-        logL_null = result_null.llf
+            # Calculate LRT p-value
+            logL_full = result.llf  # Full model log-likelihood
+            try:
+                model_null = BetaModel.from_formula("mean ~ 1", df_weights, link=sm.families.links.Logit())
+                result_null = model_null.fit()
+                logL_null = result_null.llf
 
-        LRT_stat = -2 * (logL_null - logL_full)
-        p_value = chi2.sf(LRT_stat, df=1) 
+                LRT_stat = -2 * (logL_null - logL_full)
+                p_value = chi2.sf(LRT_stat, df=1)
+            except:
+                p_value = np.nan
+
+        except:
+            delta_mu = np.nan
+            p_value = np.nan
+
     else:
         p_value = delta_mu = mu_C = mu_T = np.nan
 

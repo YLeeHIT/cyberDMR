@@ -23,8 +23,15 @@ Differentially methylated regions (DMRs) are key genomic features reflecting cha
 
 ## Installation
 ```bash
+### Clone the repository
 git clone https://github.com/YLeeHIT/cyberDMR.git
 cd cyberDMR
+
+### create a new conda environment
+conda create -n DM-cyberDMR python=3.12 -y
+conda activate DM-cyberDMR
+
+### Install required dependencies
 pip install -r requirements.txt
 ```
 
@@ -84,13 +91,6 @@ Example (`in_cyber.lab`):
 564N    normal  /absolute/path/to/noh_normal_564N_auto.bed
 ```
 
-To build an inlab file, you can refer to the following instructions:
-```
-cd ./cyberDMR/data/real_data/chr22
-ls noh_lethal_*bed noh_normal_*bed > raw.lab
-awk -v dir=$(pwd) 'BEGIN{OFS="\t"}{"ID","lethal/normal",dir,$1}' raw.lab > in_cyber.lab
-```
-
 **Note:** Ensure all paths are absolute (not relative), and that group names match the `--group1` and `--group2` arguments when running `cyberDMR.py`.
 Once ready, you can run cyberDMR as follows:
 ```bash
@@ -111,12 +111,54 @@ cat ./chr*txt |sort -k1,1V -k2,2n -k3,3n > final_result.txt
 To simplify everything, you can run the pre-configured shell script:
 
 ```bash
-bash ./simulate_data.sh -o ../data/simulate_data -t 100
+bash ./simulate_data.sh [options]
 ```
 
-View help information:
+| Parameter               | Required | Description                                               | Default       |
+|-------------------------|----------|-----------------------------------------------------------|---------------|
+| `--output_dir`          | ✅       | Output directory to store simulated data and results      | *(no default)*|
+| `--total_dmr`           | ❌       | Total number of DMR regions to simulate                   | `10000`       |
+| `--mean_delta`          | ❌       | Average methylation difference between groups             | `0.25`        |
+| `--n_control`           | ❌       | Number of control samples                                 | `10`          |
+| `--n_treatment`         | ❌       | Number of treatment samples                               | `10`          |
+| `--coverage_mean`       | ❌       | Mean sequencing coverage                                  | `30`          |
+| `--coverage_std`        | ❌       | Standard deviation of coverage                            | `5`           |
+| `--chr_name`            | ❌       | Chromosome name to simulate DMRs                          | `chr1`        |
+| `--start_pos`           | ❌       | Start position for simulation                             | `100000`      |
+| `--length_mean`         | ❌       | Mean DMR region length                                    | `1000`        |
+| `--length_std`          | ❌       | Standard deviation of DMR length                          | `100`         |
+| `--max_cpgs`            | ❌       | Maximum number of CpGs per DMR                            | `100`         |
+| `--dmr_per`             | ❌       | Proportion of good DMRs                                   | `0.19`        |
+| `--dmr_notable_per`     | ❌       | Proportion of notable DMRs                                | `0.01`        |
+| `--dmr_inconsis_per`    | ❌       | Proportion of inconsistent DMRs                           | `0`           |
+| `--dmr_sub_per`         | ❌       | Proportion of sub DMRs
+
+You can use the provided script to automatically generate the input file (`in_cyber.lab`) and run `cyberDMR`.
+
 ```bash
-bash ./simulate_data.sh -h
+bash cyberDMR.sh <indir> <outdir> <group1> <group2> <threads>
+```
+
+| Parameter | Required | Description | Example |
+|-------------|----------|----------------------------------------------|----------------|
+| `<indir>` | ✅ | Input folder with `.bed` files | `./input/` |
+| `<outdir>` | ✅ | Output folder for results | `./results/` |
+| `<group1>` | ✅ | First group label (used in filenames) | `lethal` |
+| `<group2>` | ✅ | Second group label | `normal` |
+| `<threads>` | ✅ | Number of threads for parallel computation | `8` |
+
+View help information:
+
+```bash
+bash simulate_data.sh -h
+bash cyberDMR.sh -h
+```
+
+Example:
+
+```
+bash simulate_data.sh -o ../data/simulate_data -t 100
+bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result lethal normal 8
 ```
 
 # Release Notes
@@ -128,15 +170,26 @@ bash ./simulate_data.sh -h
 
 If you use cyberDMR in your research, please cite:
 
+If you use **cyberDMR** in your research, please cite the following paper:
+
+> **Li, Yang**, *et al.*
+> **cyberDMR: a robust and high-sensitivity approach for differentially methylated regions detection**
+> *Bioinformatics*, 2025 (under review)
+> [GitHub Project](https://github.com/YLeeHIT/cyberDMR)
+
+BibTeX:
+
 ```bibtex
-@article{
-    title={cyberDMR: a robust and high-sensitivity approach for differentially methylated regions detection},
-    author={Li, Yang and others},
-    journal={Bioinformatics},
-    year={2025},
-    note={Manuscript under review}
+@article{li2025cyberdmr,
+    title = {cyberDMR: a robust and high-sensitivity approach for differentially methylated regions detection},
+    author = {Li, Yang and others},
+    journal = {Bioinformatics},
+    year = {2025},
+    note = {Manuscript under review}
 }
 ```
+
+We appreciate your support!
 
 # Contributors
 
