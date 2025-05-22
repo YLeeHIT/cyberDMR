@@ -101,11 +101,6 @@ python cyberDMR.py \
     --group2 normal
 ```
 
-If you want to merge all chromosome files, you can refer to the following instructions:
-```
-cat ./chr*txt |sort -k1,1V -k2,2n -k3,3n > final_result.txt 
-```
-
 ### Quick Start (Recommended)
 
 To simplify everything, you can run the pre-configured shell script:
@@ -131,7 +126,11 @@ bash ./simulate_data.sh [options]
 | `--dmr_per`             | ❌       | Proportion of good DMRs                                   | `0.19`        |
 | `--dmr_notable_per`     | ❌       | Proportion of notable DMRs                                | `0.01`        |
 | `--dmr_inconsis_per`    | ❌       | Proportion of inconsistent DMRs                           | `0`           |
-| `--dmr_sub_per`         | ❌       | Proportion of sub DMRs
+| `--dmr_sub_per`         | ❌       | Proportion of sub DMRs                                    | `0`           |
+| `--density`             | ❌       | CpG density type: `mix`, `dense`, or `sparse`             | `mix`         |
+| `--dense_ratio`         | ❌       | Proportion of dense regions (only applies if `mix`)       | `0.3`         |
+| `--seed`                | ❌       | Random seed                                               | `42`          |
+| `--threads`             | ❌       | Number of threads used by cyberDMR                        | `1`           |
 
 You can use the provided script to automatically generate the input file (`in_cyber.lab`) and run `cyberDMR`.
 
