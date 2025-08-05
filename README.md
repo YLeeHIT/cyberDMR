@@ -162,10 +162,21 @@ bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result l
 
 # Release Notes
 
-## Release Notes – cyberDMR v1.0.0
+## Release Notes – cyberDMR v1.0
 
 **Release Date:** 2025-05-13
 **Status:** Initial release
+
+
+## Release Notes – cyberDMR v1.1
+
+**Release Date:** 2025-08-5
+**Status:** Initial release
+
+- Fixed the "Maximum Likelihood optimization failed" error in certain edge cases during model fitting.
+- Added simulated datasets for multiple scenarios to demonstrate tool behavior under different conditions.
+- Expanded and clarified usage instructions.
+
 
 If you use cyberDMR in your research, please cite:
 
