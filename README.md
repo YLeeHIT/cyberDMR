@@ -1,6 +1,6 @@
 # cyberDMR
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1-blue)
 ![Language](https://img.shields.io/badge/language-python-blue)
 ![Language](https://img.shields.io/badge/language-shell-4EAA25)
 ![Language](https://img.shields.io/badge/language-R-blue)
