@@ -8,7 +8,7 @@ def calculate_score(delta_m, distance, d_max, alpha=1.0, beta=0.01):
     return alpha * np.abs(delta_m) - beta * (distance / d_max)
 
 def find_blocks_greedy(out_data, delta_m_mean_threshold=0.1, min_cpg_count=5, alpha=1.0, beta=0.5,
-                       group1="g1", group2="g2",
+                       group1="g1", group2="g2", qvalue=0.05, Fvalue=15,
                        position_col="Position", delta_m_col="mean_diff", block_col="Block", chr_col="chr1"):
     """
     Adopting a greedy strategy to extend CpG blocks by dividing them into 'Blocks', 
@@ -77,7 +77,7 @@ def find_blocks_greedy(out_data, delta_m_mean_threshold=0.1, min_cpg_count=5, al
                         total_delta_m = new_total_delta_m
                         block_size = new_block_size
                         if left_idx - 1 in unassigned:
-                            left_idx -= 1  # **直接向左扩展**
+                            left_idx -= 1 
                         else:
                             left_score = -np.inf
                             left_end = True
@@ -117,7 +117,7 @@ def find_blocks_greedy(out_data, delta_m_mean_threshold=0.1, min_cpg_count=5, al
                 block_data.loc[list(block), block_col] = new_block_name
                 sub_block = block_data.loc[list(block)]
                 block_results.append(sub_block)
-                wbr_result = wbr.run_weighted_beta_regression(sub_block, group1=group1, group2=group2)
+                wbr_result = wbr.run_weighted_beta_regression(sub_block, group1=group1, group2=group2, f_value=Fvalue)
 
                 if wbr_result['DMR']:            
                     dmr_summary.append([
@@ -137,7 +137,7 @@ def find_blocks_greedy(out_data, delta_m_mean_threshold=0.1, min_cpg_count=5, al
     ])
 
     ### BH multiple test correction
-    dmr_blocks_with_padj, significant_dmr = BH_adjust.adjust_p_values_v2(dmr_summary_result, group1=group1, group2=group2)
+    dmr_blocks_with_padj, significant_dmr = BH_adjust.adjust_p_values(dmr_summary_result, group1=group1, group2=group2, qvalue=qvalue)
     return dmr_blocks_with_padj, significant_dmr
 
 if __name__ == "__main__":

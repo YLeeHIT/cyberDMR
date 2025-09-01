@@ -54,7 +54,7 @@ fi
 # Get script directory & Python script path
 # -----------------------------
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/script"
-cyberDMR_py="${script_dir}/cyberDMR_main.py"
+cyberDMR_py="${script_dir}/cyberDMR.py"
 
 echo "[INFO] script_dir is ${script_dir}"
 
@@ -88,7 +88,7 @@ cd "${outdir}" || exit 1
 
 echo "[INFO] Running cyberDMR..."
 # conda activate DM-cyberDMR
-python "${cyberDMR_py}" --out_dir "${outdir}" --threads "${threads}" --group1 "${group1}" --group2 "${group2}"
+#python "${cyberDMR_py}" --out_dir "${outdir}" --threads "${threads}" --group1 "${group1}" --group2 "${group2}"
 cat ./chr*txt |sort -k1,1V -k2,2n -k3,3n > cyberDMR_result.txt
 
 echo "[INFO] Finished successfully."

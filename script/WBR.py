@@ -184,7 +184,7 @@ def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_valu
     if F_stat > f_value:
         try:
             model = BetaModel.from_formula("mean ~ Group", df_weights, link=sm.families.links.Logit())
-            result = model.fit()
+            result = model.fit(method="lbfgs", maxiter=1000, disp=False)
 
             beta_0 = result.params["Intercept"]
             beta_1 = result.params[f"Group[T.{group2}]"]
@@ -198,7 +198,7 @@ def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_valu
             logL_full = result.llf  # Full model log-likelihood
             try:
                 model_null = BetaModel.from_formula("mean ~ 1", df_weights, link=sm.families.links.Logit())
-                result_null = model_null.fit()
+                result_null = model_null.fit(method="lbfgs", maxiter=1000, disp=False)
                 logL_null = result_null.llf
 
                 LRT_stat = -2 * (logL_null - logL_full)
@@ -244,10 +244,9 @@ def compute_f_statistic(df_weights, group1="g1", group2="g2"):
     epsilon = 1e-8
     S_within = max(S_within, epsilon)
     F_stat = S_between / S_within
-
     return F_stat
 
-def run_weighted_beta_regression(df_summary, threshold=5, group1="g1", group2="g2", f_value=15):
+def run_weighted_beta_regression(df_summary, group1="g1", group2="g2", f_value=15):
     """
     Run WBR weighted Beta regression, with the option to choose either WLS (Weighted Least Squares) or MLE (Maximum Likelihood Estimation) Beta regression
     Automatically infer group1_size and group2_size from df_summary

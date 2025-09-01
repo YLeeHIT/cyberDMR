@@ -556,6 +556,7 @@ def simulate_group_samples_with_validation(
     }   
 
 def write_simulation_parameters(
+    df: pd.DataFrame,
     output_dir: str,
     total_dmr: int,
     mean_delta: float,
@@ -579,6 +580,10 @@ def write_simulation_parameters(
     max_gap: int = 5000,
 ):
     log_path = os.path.join(output_dir, "para.log")
+    
+    total_dmr = len(df)
+    counts = df["category"].value_counts().to_dict()
+    
     with open(log_path, "w") as f:
         f.write("# Simulation Parameters Log\n")
         f.write(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
@@ -586,11 +591,11 @@ def write_simulation_parameters(
         f.write(f"Chromosome: {chr_name}\n")
         f.write(f"Start position: {start_pos}\n")
         f.write(f"Total simulated regions: {total_dmr}\n")
-        f.write(f" - good-DMR: {int(total_dmr * dmr_per)}\n")
-        f.write(f" - inconsistent-DMR: {int(total_dmr * dmr_inconsis_per)}\n")
-        f.write(f" - sub-DMR: {int(total_dmr * dmr_sub_per)}\n")
-        f.write(f" - notable-DMR: {int(total_dmr * dmr_notable_per)}\n")
-        f.write(f" - non-DMR: {total_dmr - int(total_dmr * (dmr_per + dmr_inconsis_per + dmr_notable_per + dmr_sub_per))}\n\n")
+        f.write(f" - good-DMR: {counts.get("good-DMR", 0)}\n")
+        f.write(f" - inconsistent-DMR: {counts.get('inconsistent-DMR', 0)}\n")
+        f.write(f" - sub-DMR: {counts.get('sub-DMR', 0)}\n")
+        f.write(f" - notable-DMR: {counts.get('notable-DMR', 0)}\n")
+        f.write(f" - non-DMR: {counts.get('non-DMR', 0)}\n\n")
 
         f.write(f"DMR density mode: {density}\n")
         if density == "mix":
@@ -639,7 +644,7 @@ def simulate_mixed_regions_randomized(
 ):
     np.random.seed(seed)
     random.seed(seed)
-    os.makedirs(output_dir, exist_ok=True)
+    #os.makedirs(output_dir, exist_ok=True)
 
     # Calculate the number of regions for each type
     dmr_count = int(total_dmr * dmr_per)
@@ -713,10 +718,10 @@ def simulate_mixed_regions_randomized(
             
             elif task == "non-DMR":
                 region["category"] = task
-                regions.append(region)
+                #regions.append(region)
 
                 region_output_dir = os.path.join(output_dir, f"{chr_name}_{region['start']}_{region['end']}_{task}")
-                simulate_group_samples_with_validation(
+                validation = simulate_group_samples_with_validation(
                     dmr=region,
                     n_control=n_control,
                     n_treatment=n_treatment,
@@ -725,6 +730,9 @@ def simulate_mixed_regions_randomized(
                     group_std=group_std,
                     output_dir=region_output_dir
                 )
+
+                if validation["delta_check_passed"]:
+                    regions.append(region)
 
             else:
                 region["category"] = task
@@ -743,7 +751,6 @@ def simulate_mixed_regions_randomized(
                 region_index += 1
         
             pos = advance_position(end)
-        
      # Organize the output
     rows = []
     for region in regions:
@@ -759,27 +766,28 @@ def simulate_mixed_regions_randomized(
     df = pd.DataFrame(rows)
 
     write_simulation_parameters(
-    output_dir=output_dir,
-    total_dmr=total_dmr,
-    mean_delta=mean_delta,
-    n_control=n_control,
-    n_treatment=n_treatment,
-    coverage_mean=coverage_mean,
-    coverage_std=coverage_std,
-    chr_name=chr_name,
-    start_pos=start_pos,
-    max_cpgs=max_cpgs,
-    dmr_per=dmr_per,
-    dmr_notable_per=dmr_notable_per,
-    dmr_inconsis_per=dmr_inconsis_per,
-    dmr_sub_per=dmr_sub_per,
-    seed=seed,
-    length_mean=length_mean,
-    length_std=length_std,
-    density=density, 
-    dense_ratio=dense_ratio,
-    min_gap=500,
-    max_gap=5000)
+        df = df,
+        output_dir=output_dir,
+        total_dmr=total_dmr,
+        mean_delta=mean_delta,
+        n_control=n_control,
+        n_treatment=n_treatment,
+        coverage_mean=coverage_mean,
+        coverage_std=coverage_std,
+        chr_name=chr_name,
+        start_pos=start_pos,
+        max_cpgs=max_cpgs,
+        dmr_per=dmr_per,
+        dmr_notable_per=dmr_notable_per,
+        dmr_inconsis_per=dmr_inconsis_per,
+        dmr_sub_per=dmr_sub_per,
+        seed=seed,
+        length_mean=length_mean,
+        length_std=length_std,
+        density=density, 
+        dense_ratio=dense_ratio,
+        min_gap=500,
+        max_gap=5000)
     return df
 
 def main():
@@ -791,7 +799,7 @@ def main():
     parser.add_argument("--n_treatment", type=int, default=5)
     parser.add_argument("--coverage_mean", type=int, default=30)
     parser.add_argument("--coverage_std", type=int, default=5)
-    parser.add_argument("--output_dir", type=str, default="./")
+    parser.add_argument("--output_dir", type=str, default="./out")
     parser.add_argument("--chr_name", type=str, default="chr1")
     parser.add_argument("--start_pos", type=int, default=10000)
     parser.add_argument("--length_mean", type=int, default=1000)
@@ -806,6 +814,7 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
 
     args = parser.parse_args()
+    os.makedirs(args.output_dir, exist_ok=True)
 
     # Call the simulation function
     df = simulate_mixed_regions_randomized(

@@ -36,7 +36,7 @@ def generate_simulated_dmr_data(num_rows=1000, p_value_threshold=0.05, group1="g
     
     return df
 
-def adjust_p_values_v2(df, group1="g1", group2="g2"):
+def adjust_p_values(df, group1="g1", group2="g2", qvalue=0.05):
     """
     Perform Benjamini-Hochberg (BH) correction on the given DMR data and return two DataFrames: 
     1. dmr_data_with_padj：This DataFrame contains the original p-values and the adjusted p-values.
@@ -61,12 +61,13 @@ def adjust_p_values_v2(df, group1="g1", group2="g2"):
     df['p_adj'] = df['p_adj'].apply(lambda x: float(f"{x:.4g}"))
 
     dmr_data_with_padj = df[['chromosome', 'start', 'end', 'count', f"{group1}_mean", f"{group2}_mean", 'delta', 'F', 'pvalue', 'p_adj', 'DMR']].copy()
-    significant_dmr_data = dmr_data_with_padj[dmr_data_with_padj['p_adj'] < 0.05][['chromosome', 'start', 'end', 'count', f"{group1}_mean", f"{group2}_mean", 'delta', 'F','pvalue', 'p_adj', 'DMR']].copy()
+    dmr_data_with_padj = dmr_data_with_padj.sort_values(by='start')
+    significant_dmr_data = dmr_data_with_padj[dmr_data_with_padj['p_adj'] < qvalue][['chromosome', 'start', 'end', 'count', f"{group1}_mean", f"{group2}_mean", 'delta', 'F','pvalue', 'p_adj', 'DMR']].copy()
 
     return dmr_data_with_padj, significant_dmr_data
 
 if __name__ == "__main__":
     # Perform BH correction and adjust the output format
     dmr_data = generate_simulated_dmr_data(group1="xizang",group2="north")
-    dmr_data_with_padj, significant_dmr_data = adjust_p_values_v2(dmr_data,group1="xizang",group2="north")
+    dmr_data_with_padj, significant_dmr_data = adjust_p_values(dmr_data,group1="xizang",group2="north")
     print(significant_dmr_data)

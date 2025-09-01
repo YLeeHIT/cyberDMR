@@ -137,11 +137,12 @@ group1="treatment"
 group2="control"
 threads=4
 bash ${cyberDMR_sh} ${group1} ${group2} ${threads}
-    echo " -a, --dense_ratio NUM Dense region ratio (default: $dense_ratio)"
-    echo " -S, --seed NUM Random seed (default: $seed)"
-    echo " -h, --help Show help"
-    exit 0
-}
+#{
+#    echo " -a, --dense_ratio NUM Dense region ratio (default: $dense_ratio)"
+#    echo " -S, --seed NUM Random seed (default: $seed)"
+#    echo " -h, --help Show help"
+#    exit 0
+#}
 
 echo "[INFO] All processes has finished"
 
