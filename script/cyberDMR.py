@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     # ---------------- Optional arguments ----------------
     optional = parser.add_argument_group("Optional arguments")
     optional.add_argument("--threads", "-t", type=int, default=8, metavar="INT", help="Number of worker processes (default: 8).")
-    optional.add_argument("--chroms", "-chr", default="chr1-chr22,chrX,chrY", metavar="STR", help="Chromosome set, e.g. 'chr1-chr22,chrX,chrY' or 'chr22' (default: chr1-chr22,chrX,chrY).")
+    optional.add_argument("--chroms", "-chr", default="chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY", metavar="STR", help="Chromosome set, e.g. 'chr1-chr22,chrX,chrY' or 'chr22' (default: chr1-chr22,chrX,chrY).")
     optional.add_argument("--delta", "-d", type=float, default=0.1, metavar="FLOAT", help="Methylation difference (delta) threshold (default: 0.1).")
     optional.add_argument("--cpg-distance", "-bdis", type=int, default=500, metavar="INT", help="Max CpG distance for blocking (default: 500).")
     optional.add_argument("--cpg-count", "-ct", type=int, default=5, metavar="INT", help="Min CpG count per block (default: 5).")
@@ -104,7 +104,7 @@ def process_one_chromosome(in_chr, out_dir, group1, group2,
     # Step 1: Impute and merge data
     processed_samples = filling.process_samples(sample_data, coverage_threshold=coverage_threshold, max_distance=max_distance)
     merged_data = filling.merge_samples_fast(processed_samples)
-    merged_data.to_csv(os.path.join(out_dir, f"{in_chr}_merged_data_after_filling.txt"), sep="\t", header=True, index=False)
+    #merged_data.to_csv(os.path.join(out_dir, f"{in_chr}_merged_data_after_filling.txt"), sep="\t", header=True, index=False)
 
     # Step 2: CpG blocking
     out_data, block_ranges = blocking.process_data(merged_data, label, group1, group2, CpG_distance=CpG_distance, CpG_count=CpG_count)
