@@ -19,9 +19,7 @@ Differentially methylated regions (DMRs) are key genomic features reflecting cha
 - Weighted beta regression with LRT for statistical inference
 - Identifiying significant DMRs via BH correction and F-statitics
 
-# Running cyberDMR
-
-## Installation
+## 1. Installation
 ```bash
 ### Clone the repository
 git clone https://github.com/YLeeHIT/cyberDMR.git
@@ -35,7 +33,155 @@ conda activate DM-cyberDMR
 pip install -r requirements.txt
 ```
 
-## Simulate DMR regions
+## 2. Usage
+
+```bash
+bash cyberDMR.sh --in-dir <indir> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
+```
+
+Check all available options with:
+```bash
+bash cyberDMR.sh --help
+```
+
+For detailed parameter descriptions, see **3. Arguments**.
+For usage examples, see **8. Demo**
+
+
+## 3. Arguments
+
+| Parameter               | Required | Description                               | Example                |
+|------------------———————|----------|-------------------------------------------|------------------------|
+| `-o, --out-dir`         |          | Output directory for storing all results  | `./results/`           |
+| `-g1, --group1`         |          | Label of group 1 (e.g., treatment)        | `treatment`            |
+| `-g2, --group2`         |          | Label of group 2 (e.g., control)          | `control`              |
+| `-i, --in-dir`          |          | Input files (auto-generate `cyber.lab`)   | `./input/`             |
+| `-lab, --cyber-lab`     |          | Path to an existing `cyber.lab` file      | `./cyber.lab`          |
+| `-t, --threads`         |          | Number of worker processes                | `8`                    |
+| `-chr, --chroms`        |          | Chromosome set specification              | `chr1-,chr2,chr3`      |
+| `-d, --delta`           |          | Delta threshold for DMR detection         | `0.1`                  |
+| `-bdis, --cpg-distance` |          | Maximum CpG distance for blocking         | `500`                  |
+| `-ct, --cpg-count`      |          | Minimum number of CpGs per block          | `5`                    |
+| `-cov, --min-cov`       |          | Minimum CpG coverage to fill              | `5`                    |
+| `-fdis, --max-dist`     |          | Maximum distance of adjacent CpGs         | `500`                  |
+| `-q, --qvalue`          |          | BH-corrected p-value threshold            | `0.05`                 |
+| `-f, --Fvalue`          |          | F statistic threshold                     | `15`                   |
+
+\* One of `--in-dir` or `--cyber-lab` must be provided.
+
+---
+
+### `--out-dir`
+Supports both absolute and relative paths.  
+This directory will store all output results, including per-chromosome files and the final merged and sorted file `cyberDMR_result.bed`.  
+
+### `--group1`, `--group2`
+Names of the two groups must be provided.  
+**The experimental group should come first, followed by the control group**, to ensure consistent statistical comparison.  
+
+### `--in-dir`
+Supports both absolute and relative paths.  
+Should point to the directory containing input files formatted.  
+When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [Input](#input)).  
+
+### `--cyber-lab`
+If the user has already prepared a `lab` file that meets the **Input** requirements, it can be provided via this parameter instead of using `--in-dir`.  
+
+### `--threads`
+Number of worker processes.  
+It is recommended to set this equal to the number of chromosomes for best performance.  
+
+### `--delta`
+Minimum methylation difference (Δ).  
+DMRs with Δ below this threshold will be filtered out.  
+
+### `--cpg-distance`
+Maximum CpG distance for **blocking**.  
+This parameter affects the blocking process. Suggested range: `300–1000` (default: `500`).  
+
+### `--cpg-count`
+Minimum number of CpGs per DMR block.  
+Regions with fewer CpGs will be filtered out.  
+
+### `--min-cov`
+Minimum CpG coverage for smoothing:  
+- Recommended `5` for WGBS data  
+- Recommended `3` for ONT data  
+When coverage falls below this threshold, smoothing will be applied.  
+
+### `--max-dist`
+Maximum distance between adjacent CpGs for **clustering**.  
+This parameter affects the clustering process. Suggested range: `300–1000` (default: `500`).  
+
+### `--qvalue`
+Benjamini–Hochberg corrected p-value threshold.  
+DMRs with q-values above this cutoff will be filtered out.  
+
+### `--Fvalue`
+F-statistic threshold.  
+- Strict filtering: `20`  
+- Relaxed filtering: `5`  
+
+---
+
+## 4. Input format
+
+Before running `cyberDMR.sh`, you can provide the directory containing all sample files using the `--in-dir` option. In this case, cyberDMR will automatically generate the `in_cyber.lab` file.  
+Alternatively, you can supply your own lab file with sample paths and grouping information using the `--lab` option. cyberDMR will also recognize this file and proceed with the analysis.
+
+### Input File Requirements
+- Input files should be tab-delimited text (`.tsv` or `.bed`-like format) without a header.  
+- Each input file name must include the group label (e.g., `HG002_treatment.tsv`, `HG003_control.tsv`).
+- Each file should contain exactly four columns in the following order:
+
+1. **Chromosome** (`string`) – e.g., `chr22`  
+2. **CpG position** (`integer`) – genomic coordinate (0-based or 1-based)  
+3. **Methylation level** (`float`) – value between `0.0` and `1.0`  
+4. **Coverage** (`integer`) – positive integer indicating read depth  
+
+**Example** (`in_cyber.lab`):
+```
+chr1    107908  1.0     25
+chr1    107977  1.0     40
+chr1    107988  1.0     20
+chr1    108918  0.5301  32
+chr1    109368  0.5236  30
+chr1    109545  0.675   24
+chr1    110009  0.5276  33
+chr1    113405  0.2748  32
+chr1    113828  0.3616  25
+chr1    113945  0.3926  31
+```
+
+### Lab File Format Requirements
+
+- This file is used to define the grouping of biological replicates, their phenotypic labels, and the corresponding input files.  
+- It must strictly follow the format below (tab-delimited, without a header):
+
+1. **Sample ID** – unique identifier for each biological replicate  
+2. **Group label** – e.g., `treatment` or `control` (only **two groups** are supported)  
+3. **Absolute file path** – path to the input file (including the group label in the filename)  
+
+**Example** (`in_cyber.lab`):
+```
+139C    lethal  /absolute/path/to/noh_lethal_139C_auto.bed
+1601C   lethal  /absolute/path/to/noh_lethal_1601C_auto.bed
+349C    lethal  /absolute/path/to/noh_lethal_349C_auto.bed
+379C    lethal  /absolute/path/to/noh_lethal_379C_auto.bed
+46C lethal  /absolute/path/to/noh_lethal_46C_auto.bed
+514C    lethal  /absolute/path/to/noh_lethal_514C_auto.bed
+564C    lethal  /absolute/path/to/noh_lethal_564C_auto.bed
+1601N   normal  /absolute/path/to/noh_normal_1601N_auto.bed
+448N    normal  /absolute/path/to/noh_normal_448N_auto.bed
+508N    normal  /absolute/path/to/noh_normal_508N_auto.bed
+564N    normal  /absolute/path/to/noh_normal_564N_auto.bed
+```
+
+**Note:** Ensure all paths are absolute (not relative), and that group names match the `--group1` and `--group2` arguments when running `cyberDMR.py`.
+Once ready, you can run cyberDMR as follows:
+
+
+## 5. Simulate DMR regions
 To generate simulated DMR regions for benchmarking:
 
 ```bash
@@ -65,40 +211,6 @@ To generate input files in formats compatible with **cyberDMR**, **Metilene**, *
 
 ```bash
 bash merge_simulates_samples.sh -o ../data/simulate_data
-```
-
-## Run cyberDMR
-### Input requirement for cyberDMR
-
-Before running `cyberDMR.py`, you need to prepare a sample information file named `in_cyber.lab`.
-This file should be a **tab-separated** text file with **three columns**:
-1. **Sample ID**
-2. **Group name** (e.g., `normal`, `tumor`, `control`, `treatment`)
-3. **Absolute path to the BED-format methylation file**
-
-Example (`in_cyber.lab`):
-```
-139C    lethal  /absolute/path/to/noh_lethal_139C_auto.bed
-1601C   lethal  /absolute/path/to/noh_lethal_1601C_auto.bed
-349C    lethal  /absolute/path/to/noh_lethal_349C_auto.bed
-379C    lethal  /absolute/path/to/noh_lethal_379C_auto.bed
-46C lethal  /absolute/path/to/noh_lethal_46C_auto.bed
-514C    lethal  /absolute/path/to/noh_lethal_514C_auto.bed
-564C    lethal  /absolute/path/to/noh_lethal_564C_auto.bed
-1601N   normal  /absolute/path/to/noh_normal_1601N_auto.bed
-448N    normal  /absolute/path/to/noh_normal_448N_auto.bed
-508N    normal  /absolute/path/to/noh_normal_508N_auto.bed
-564N    normal  /absolute/path/to/noh_normal_564N_auto.bed
-```
-
-**Note:** Ensure all paths are absolute (not relative), and that group names match the `--group1` and `--group2` arguments when running `cyberDMR.py`.
-Once ready, you can run cyberDMR as follows:
-```bash
-python cyberDMR.py \
-    --out_dir cyberDMR_result \
-    --threads 4 \
-    --group1 lethal \
-    --group2 normal
 ```
 
 ### Quick Start (Recommended)
@@ -134,17 +246,7 @@ bash ./simulate_data.sh [options]
 
 You can use the provided script to automatically generate the input file (`in_cyber.lab`) and run `cyberDMR`.
 
-```bash
-bash cyberDMR.sh <indir> <outdir> <group1> <group2> <threads>
-```
 
-| Parameter | Required | Description | Example |
-|-------------|----------|----------------------------------------------|----------------|
-| `<indir>` | ✅ | Input folder with `.bed` files | `./input/` |
-| `<outdir>` | ✅ | Output folder for results | `./results/` |
-| `<group1>` | ✅ | First group label (used in filenames) | `lethal` |
-| `<group2>` | ✅ | Second group label | `normal` |
-| `<threads>` | ✅ | Number of threads for parallel computation | `8` |
 
 View help information:
 
@@ -153,22 +255,23 @@ bash simulate_data.sh -h
 bash cyberDMR.sh -h
 ```
 
-Example:
+## 6. Example:
 
 ```
 bash simulate_data.sh -o ../data/simulate_data -t 100
 bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result lethal normal 8
 ```
 
-# Release Notes
 
-## Release Notes – cyberDMR v1.0
+## Release Notes
+
+### Release Notes – cyberDMR v1.0
 
 **Release Date:** 2025-05-13
 **Status:** Initial release
 
 
-## Release Notes – cyberDMR v1.1
+### Release Notes – cyberDMR v1.1
 
 **Release Date:** 2025-08-5
 **Status:** Initial release

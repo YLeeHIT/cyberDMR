@@ -47,30 +47,36 @@ for format in "${formats[@]}"; do
 			echo -e "chr\tpos\tmeth_level\tcoverage" > "$outfile"
 			awk 'NR>1 {print $1"\t"$2"\t"$5"\t"$4}' "$file"  >> "$outfile"
 			grep -vwh "meth_level" "$outfile" > "${outfile_noheader}"
+            rm "$outfile"
 		elif [[ "$format" == "HOME" ]]; then
 			#echo -e "Doing HOME"
 			echo -e "chr\tpos\tstrand\tcontext\tmeth_count\tcoverage" > "$outfile"
 			awk 'NR>1 {chr=$1; gsub("chr","",chr); meth=int($5*$4); print chr"\t"$2"\t+\tCG\t"meth"\t"$4}' "$file" >> ${outfile}
 			grep -vwh "meth_count" "$outfile" > "${outfile_noheader}"
+            rm "$outfile"
 		elif [[ "$format" == "Metilene" ]]; then
 			#echo -e "Doing Metilene"
 			echo -e "chr\tstart\tend\tmethylation_level" > "$outfile"
 			awk 'NR>1 {print $1"\t"$2"\t"$3"\t"$5}' "$file"  >> "$outfile"
 			grep -vwh "methylation_level" "$outfile" > "${outfile_noheader}"
+            rm "$outfile"
 		elif [[ "$format" == "BSmooth" ]]; then
 			#echo -e "Doing BSmooth"
 			echo -e "assembly\tposition\tstrand\tclass\tmc\th" > "$outfile"
 			awk 'NR>1 {chr=$1; gsub("chr","",chr); meth=int($5*$4); print chr"\t"$2"\t+\tCG\t"meth"\t"$4}' "$file" >> "$outfile"
 			grep -vwh "^ID" "$outfile" > "${outfile_noheader}"
+            rm "$outfile"
 		elif [[ "$format" == "DiffMethylTools" ]]; then
 			#echo -e "Doing DiffMethylTools"
 			echo -e "chr\tpos\tstrand\tpositive\tnegative\tcontxt\tcontxt2" > "$outfile"
 			awk 'NR>1 {positive=int($4*$5); negative=$4-positive; print $1"\t"$2"\t+\t"positive"\t"negative"\tCG\tCGC"}' "$file" >> ${outfile}
 			grep -vwh "positive" "$outfile" > "${outfile_noheader}"
+            rm "$outfile"
 		elif [[ "$format" == "MethyLasso" ]]; then
 			#echo -e "Doing DiffMethylTools"
             cp "$file" "${outfile}"
 			grep -vwh "coverage" "$outfile" > "${outfile_noheader}"
+            rm "$outfile"
 		else
 			echo "ERROR: Format is wrong"
 			exit 2
