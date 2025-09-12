@@ -33,6 +33,8 @@ conda activate DM-cyberDMR
 pip install -r requirements.txt
 ```
 
+---
+
 ## 2. Usage
 
 ```bash
@@ -46,6 +48,8 @@ bash cyberDMR.sh --help
 
 For detailed parameter descriptions, see **3. Arguments**.
 For usage examples, see **8. Demo**
+
+---
 
 ## 3. Arguments
 
@@ -68,10 +72,6 @@ For usage examples, see **8. Demo**
 
 \* One of `--in-dir` or `--cyber-lab` must be provided.
 
-
-
----
-
 ### `--out-dir`
 Supports both absolute and relative paths.  
 This directory will store all output results, including per-chromosome files and the final merged and sorted file `cyberDMR_result.bed`.  
@@ -83,7 +83,7 @@ Names of the two groups must be provided.
 ### `--in-dir`
 Supports both absolute and relative paths.  
 Should point to the directory containing input files formatted.  
-When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [Input format](#input-format)).  
+When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [Input format](#4-input-format)).  
 
 ### `--cyber-lab`
 If the user has already prepared a `lab` file that meets the **Input** requirements, it can be provided via this parameter instead of using `--in-dir`.  
@@ -126,9 +126,11 @@ F-statistic threshold.
 ---
 
 ## 4. Input format
+
 <div align="center">
     <img src="figure/pipeline.jpg" alt="cyberDMR pipeline", width="600"/>
 </div >
+
 Before running `cyberDMR.sh`, you can provide the directory containing all sample files using the `--in-dir` option. In this case, cyberDMR will automatically generate the `in_cyber.lab` file.  
 Alternatively, you can supply your own lab file with sample paths and grouping information using the `--lab` option. cyberDMR will also recognize this file and proceed with the analysis.
 
@@ -171,7 +173,7 @@ chr1    113945  0.3926  31
 1601C   lethal  /absolute/path/to/noh_lethal_1601C_auto.bed
 349C    lethal  /absolute/path/to/noh_lethal_349C_auto.bed
 379C    lethal  /absolute/path/to/noh_lethal_379C_auto.bed
-46C lethal  /absolute/path/to/noh_lethal_46C_auto.bed
+46C     lethal  /absolute/path/to/noh_lethal_46C_auto.bed
 514C    lethal  /absolute/path/to/noh_lethal_514C_auto.bed
 564C    lethal  /absolute/path/to/noh_lethal_564C_auto.bed
 1601N   normal  /absolute/path/to/noh_normal_1601N_auto.bed
@@ -180,12 +182,78 @@ chr1    113945  0.3926  31
 564N    normal  /absolute/path/to/noh_normal_564N_auto.bed
 ```
 
-**Note:** Ensure all paths are absolute (not relative), and that group names match the `--group1` and `--group2` arguments when running `cyberDMR.py`.
-Once ready, you can run cyberDMR as follows:
+---
 
+## 5. Output Format
 
-## 5. Simulate DMR regions
-To generate simulated DMR regions for benchmarking:
+All results will be written to the specified output directory. The following files are generated:
+
+- `in_cyber.lab` – automatically generated lab file if `--in-dir` is provided  
+- `chr*_cyberDMR.txt` – per-chromosome result files  
+- `cyberDMR_result.bed` – final merged and sorted result file  
+
+### `cyberDMR_result.bed` format
+
+The file contains **11 tab-delimited columns**:
+
+1. **Chromosome** – chromosome ID (e.g., `chr1`)  
+2. **Start** – genomic start position  
+3. **End** – genomic end position  
+4. **CpG_count** – number of CpGs in the DMR  
+5. **Group1_methylation** – average methylation level in group1  
+6. **Group2_methylation** – average methylation level in group2  
+7. **Delta_methylation** – methylation difference between the two groups  
+8. **F_value** – F-statistic value  
+9. **p_value** – raw p-value  
+10. **q_value** – Benjamini–Hochberg adjusted p-value  
+11. **Pass** – whether the region passes both p-value and F-value filters (final output only keeps `True`)  
+
+**Example** (`cyber_result.bed`):
+```
+chr19   290632  290697  6       0.0681  0.2254  0.1573  31.7828 0.0003481       0.0006503       True
+chr19   291682  291986  45      0.2205  0.0291  -0.1914 47.9067 1.252e-26       1.161e-24       True
+chr19   294290  295539  65      0.4836  0.0629  -0.4208 33.1036 2.616e-40       6.564e-38       True
+chr19   310363  310457  8       0.8646  0.6734  -0.1912 25.7401 0.0001574       0.0003491       True
+chr19   310780  310961  8       0.9192  0.7596  -0.1596 46.8572 1.999e-05       6.887e-05       True
+chr19   311892  312029  10      0.8006  0.9647  0.1642  21.5986 3.107e-05       9.748e-05       True
+chr19   315493  315875  8       0.754   0.9461  0.1922  19.3177 0.000934        0.001422        True
+```
+
+---
+
+## 6. Simulated Data
+
+We provide a simulation script `simulate_data.sh` for testing and benchmarking purposes. This script includes **three main functions**:
+
+1. **Generate simulated datasets**  
+    - Supports multiple scenarios, including variation in DMR length, CpG density, methylation difference, coverage, and sample size.  
+    - Users may also directly call `simulated_data.py` for fine-grained control (see [Parameter](#parameter)).  
+
+2. **Prepare tool-specific input formats**  
+    - Converts the simulated data into input formats required by six DMR detection tools:  
+    - **cyberDMR**, **Metilene**, **HOME**, **BSmooth**, **MethyLasso**, **DiffMethylTools**  
+
+3. **Run cyberDMR on simulated data**  
+    - By default, the script will execute **cyberDMR** on the simulated datasets using default parameters.  
+    - Scripts for other tools are **not included**, since installation and environments differ.  
+    - However, we provide the example command lines we used for running these tools in our study, which users may adapt to their own environment and file paths.  
+                                                
+### Run
+
+You can directly use the shell script `simulate_data.sh`.  
+The parameter `--output_dir` must be specified, while all other parameters are optional.  
+For detailed parameter descriptions (see [Parameter](#parameter)).
+
+```bash
+bash simulate_data.sh --output_dir ./sim_results
+```
+
+Check all available options with:
+```bash
+bash simulate_data.sh -h
+```
+
+Alternatively, you can only generate the simulated data by calling the Python script directly:
 
 ```bash
 python simulated_data.py \
@@ -195,7 +263,7 @@ python simulated_data.py \
     --n_treatment 5 \
     --coverage_mean 30 \
     --coverage_std 5 \
-    --output_dir /mnt/data/sample_outputs \
+    --output_dir ./out \
     --chr_name chr1 \
     --start_pos 10000 \
     --length_mean 1000 \
@@ -210,19 +278,8 @@ python simulated_data.py \
     --seed 42
 ```
 
-To generate input files in formats compatible with **cyberDMR**, **Metilene**, **BSmooth**, and **HOME**, run the provided merging script:
 
-```bash
-bash merge_simulates_samples.sh -o ../data/simulate_data
-```
-
-### Quick Start (Recommended)
-
-To simplify everything, you can run the pre-configured shell script:
-
-```bash
-bash ./simulate_data.sh [options]
-```
+### Parameter
 
 | Parameter               | Required | Description                                               | Default       |
 |-------------------------|----------|-----------------------------------------------------------|---------------|
@@ -243,22 +300,13 @@ bash ./simulate_data.sh [options]
 | `--dmr_inconsis_per`    | ❌       | Proportion of inconsistent DMRs                           | `0`           |
 | `--dmr_sub_per`         | ❌       | Proportion of sub DMRs                                    | `0`           |
 | `--density`             | ❌       | CpG density type: `mix`, `dense`, or `sparse`             | `mix`         |
-| `--dense_ratio`         | ❌       | Proportion of dense regions (only applies if `mix`)       | `0.3`         |
+| `--dense_ratio`         | ❌       | Proportion of dense regions (only applies if `mix`)       | `0.35         |
 | `--seed`                | ❌       | Random seed                                               | `42`          |
 | `--threads`             | ❌       | Number of threads used by cyberDMR                        | `1`           |
 
-You can use the provided script to automatically generate the input file (`in_cyber.lab`) and run `cyberDMR`.
+---
 
-
-
-View help information:
-
-```bash
-bash simulate_data.sh -h
-bash cyberDMR.sh -h
-```
-
-## 6. Example:
+## 7. Demo:
 
 ```
 bash simulate_data.sh -o ../data/simulate_data -t 100
@@ -276,7 +324,7 @@ bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result l
 
 ### Release Notes – cyberDMR v1.1
 
-**Release Date:** 2025-08-5
+**Release Date:** 2025-09-12
 **Status:** Initial release
 
 - Fixed the "Maximum Likelihood optimization failed" error in certain edge cases during model fitting.
@@ -284,7 +332,6 @@ bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result l
 - Expanded and clarified usage instructions.
 
 
-If you use cyberDMR in your research, please cite:
 
 If you use **cyberDMR** in your research, please cite the following paper:
 
@@ -292,18 +339,6 @@ If you use **cyberDMR** in your research, please cite the following paper:
 > **cyberDMR: a robust and high-sensitivity approach for differentially methylated regions detection**
 > *Bioinformatics*, 2025 (under review)
 > [GitHub Project](https://github.com/YLeeHIT/cyberDMR)
-
-BibTeX:
-
-```bibtex
-@article{li2025cyberdmr,
-    title = {cyberDMR: a robust and high-sensitivity approach for differentially methylated regions detection},
-    author = {Li, Yang and others},
-    journal = {Bioinformatics},
-    year = {2025},
-    note = {Manuscript under review}
-}
-```
 
 We appreciate your support!
 
