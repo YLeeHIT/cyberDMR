@@ -47,27 +47,28 @@ bash cyberDMR.sh --help
 For detailed parameter descriptions, see **3. Arguments**.
 For usage examples, see **8. Demo**
 
-
 ## 3. Arguments
 
 | Parameter               | Required | Description                               | Example                |
-|------------------———————|----------|-------------------------------------------|------------------------|
-| `-o, --out-dir`         |          | Output directory for storing all results  | `./results/`           |
-| `-g1, --group1`         |          | Label of group 1 (e.g., treatment)        | `treatment`            |
-| `-g2, --group2`         |          | Label of group 2 (e.g., control)          | `control`              |
-| `-i, --in-dir`          |          | Input files (auto-generate `cyber.lab`)   | `./input/`             |
-| `-lab, --cyber-lab`     |          | Path to an existing `cyber.lab` file      | `./cyber.lab`          |
-| `-t, --threads`         |          | Number of worker processes                | `8`                    |
-| `-chr, --chroms`        |          | Chromosome set specification              | `chr1-,chr2,chr3`      |
-| `-d, --delta`           |          | Delta threshold for DMR detection         | `0.1`                  |
-| `-bdis, --cpg-distance` |          | Maximum CpG distance for blocking         | `500`                  |
-| `-ct, --cpg-count`      |          | Minimum number of CpGs per block          | `5`                    |
-| `-cov, --min-cov`       |          | Minimum CpG coverage to fill              | `5`                    |
-| `-fdis, --max-dist`     |          | Maximum distance of adjacent CpGs         | `500`                  |
-| `-q, --qvalue`          |          | BH-corrected p-value threshold            | `0.05`                 |
-| `-f, --Fvalue`          |          | F statistic threshold                     | `15`                   |
+|-------------------------|----------|-------------------------------------------|------------------------|
+| `-o, --out-dir`         | ✅        | Output directory for storing all results  | `./results/`           |
+| `-g1, --group1`         | ✅        | Label of group 1 (e.g., treatment)        | `treatment`            |
+| `-g2, --group2`         | ✅        | Label of group 2 (e.g., control)          | `control`              |
+| `-i, --in-dir`          | ✅*       | Input files (auto-generate `cyber.lab`)   | `./input/`             |
+| `-lab, --cyber-lab`     | ✅*       | Path to an existing `cyber.lab` file      | `./cyber.lab`          |
+| `-t, --threads`         | ❌        | Number of worker processes                | `8`                    |
+| `-chr, --chroms`        | ❌        | Chromosome set specification              | `chr1,chr2,chr3`       |
+| `-d, --delta`           | ❌        | Delta threshold for DMR detection         | `0.1`                  |
+| `-bdis, --cpg-distance` | ❌        | Maximum CpG distance for blocking         | `500`                  |
+| `-ct, --cpg-count`      | ❌        | Minimum number of CpGs per block          | `5`                    |
+| `-cov, --min-cov`       | ❌        | Minimum CpG coverage to retain            | `5`                    |
+| `-fdis, --max-dist`     | ❌        | Maximum distance of adjacent CpGs         | `500`                  |
+| `-q, --qvalue`          | ❌        | BH-corrected p-value threshold            | `0.05`                 |
+| `-f, --Fvalue`          | ❌        | F statistic threshold                     | `15`                   |
 
 \* One of `--in-dir` or `--cyber-lab` must be provided.
+
+
 
 ---
 
@@ -82,7 +83,7 @@ Names of the two groups must be provided.
 ### `--in-dir`
 Supports both absolute and relative paths.  
 Should point to the directory containing input files formatted.  
-When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [Input](#input)).  
+When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [Input format](#input-format)).  
 
 ### `--cyber-lab`
 If the user has already prepared a `lab` file that meets the **Input** requirements, it can be provided via this parameter instead of using `--in-dir`.  
@@ -125,7 +126,9 @@ F-statistic threshold.
 ---
 
 ## 4. Input format
-
+<div align="center">
+    <img src="figure/pipeline.jpg" alt="cyberDMR pipeline", width="600"/>
+</div >
 Before running `cyberDMR.sh`, you can provide the directory containing all sample files using the `--in-dir` option. In this case, cyberDMR will automatically generate the `in_cyber.lab` file.  
 Alternatively, you can supply your own lab file with sample paths and grouping information using the `--lab` option. cyberDMR will also recognize this file and proceed with the analysis.
 
