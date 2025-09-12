@@ -1,0 +1,4 @@
+chr	start	end	coverage	methylation_level
+chr1	192626	192627	30	0.5267
+chr1	192913	192914	33	0.6938
+chr1	193353	193354	31	0.3793

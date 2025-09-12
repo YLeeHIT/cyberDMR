@@ -34,8 +34,8 @@ Other:
     -h, --help              Show this help message.
 
 Example:
-    bash cyberDMR.sh -i ./data/samples_002 -o ./result -g1 treatment -g2 control -t 16 -d 0.1 -q 0.05
-    bash cyberDMR.sh -lab ./my_samples.lab -o ./result -g1 treatment -g2 control
+    bash cyberDMR.sh -i ./demo/input -o ./demo/output -chr chr21 -g1 lethal -g2 normal
+    bash cyberDMR.sh -lab ./demo/output/in_cyber.lab -o ./demo/output -chr chr21 -g1 lethal -g2 normal
 USAGE
 }
 
@@ -224,28 +224,26 @@ fi
 # -----------------------------
 # Run cyberDMR
 # -----------------------------
-#echo "[INFO] Running cyberDMR ..."
-#set -x
-#"${PYTHON_BIN:-python3}" "$cyberDMR_py" \
-#    --out-dir "${outdir}" \
-#    --group1 "${group1}" \
-#    --group2 "${group2}" \
-#    --threads "${threads}" \
-#    --chroms "${chroms:-chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY}" \
-#    --delta "${delta:-0.1}" \
-#    --cpg-distance "${cpg_distance:-500}" \
-#    --cpg-count "${cpg_count:-5}" \
-#    --min-cov "${min_cov:-5}" \
-#    --max-dist "${max_dist:-500}" \
-#    --qvalue "${qvalue:-0.05}" \
-#    --Fvalue "${Fvalue:-15}" \
-#    --cyber-lab "${outlab}"
-#set +x
+echo "[INFO] Running cyberDMR ..."
+"${PYTHON_BIN:-python3}" "$cyberDMR_py" \
+    --out-dir "${outdir}" \
+    --group1 "${group1}" \
+    --group2 "${group2}" \
+    --threads "${threads}" \
+    --chroms "${chroms:-chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY}" \
+    --delta "${delta:-0.1}" \
+    --cpg-distance "${cpg_distance:-500}" \
+    --cpg-count "${cpg_count:-5}" \
+    --min-cov "${min_cov:-5}" \
+    --max-dist "${max_dist:-500}" \
+    --qvalue "${qvalue:-0.05}" \
+    --Fvalue "${Fvalue:-15}" \
+    --cyber-lab "${outlab}"
 
 # -----------------------------
-# Post-processing: merge & sort result (if存在 chr*.txt)
+# Post-processing: merge & sort result
 # -----------------------------
-#if compgen -G "${outdir}/chr"*".txt" > /dev/null; then
-#    echo "[INFO] Merging chr*.txt -> ${outdir}/cyberDMR_result.txt"
-#    cat "${outdir}/chr"*".txt" | sort -k1,1V -k2,2n -k3,3n > "${outdir}/cyberDMR_result.txt"
-#else
+if compgen -G "${outdir}/chr"*".txt" > /dev/null; then
+    echo "[INFO] Merging chr*.txt -> ${outdir}/cyberDMR_result.txt"
+    cat "${outdir}/chr"*".txt" | sort -k1,1V -k2,2n -k3,3n > "${outdir}/cyberDMR_result.txt"
+fi

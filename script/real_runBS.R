@@ -42,11 +42,6 @@ g1 <- args[2]
 g2 <- args[3]
 threads <- args[4]
 
-input_dir <- "~/project/methDmr/real-data/prostate_cancer/GSE158927/split/result/formatted_BSmooth"
-g1 <- "lethal"
-g2 <- "normal"
-threads <- 8
-
 # ========== Step 1: Load libraries ==========
 suppressMessages(library(bsseq))
 
@@ -102,13 +97,10 @@ bs_tstat <- BSmooth.tstat(
 
 # ========== Step 8: Detect DMRs ==========
 dmrs <- dmrFinder(bs_tstat, cutoff = c(-4.6, 4.6), stat = "tstat")
-dmrs <- dmrFinder(bs_tstat, qcutoff = c(0.05, 0.95), stat = "tstat" )
 dmrs_filter <- subset(dmrs, n >= 5 & abs(meanDiff) >= 0.1)
 
 # ========== Step 9: Save results ==========
-write.table(dmrs, file.path(output_dir, "dmrs.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
+#write.table(dmrs, file.path(output_dir, "dmrs.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
 write.table(dmrs_filter, file.path(output_dir, "dmrs_filter.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
 
 cat("R detection completed, results have been saved to: ", output_dir, "\n")
-
-

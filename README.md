@@ -250,11 +250,6 @@ We provide a simulation script `simulate_data.sh` for testing and benchmarking p
     - Converts the simulated data into input formats required by six DMR detection tools:  
     - **cyberDMR**, **Metilene**, **HOME**, **BSmooth**, **MethyLasso**, **DiffMethylTools**  
 
-3. **Run cyberDMR on simulated data**  
-    - By default, the script will execute **cyberDMR** on the simulated datasets using default parameters.  
-    - Scripts for other tools are **not included**, since installation and environments differ.  
-    - However, we provide the example command lines we used for running these tools in our study, which users may adapt to their own environment and file paths.  
-                                                
 ### Run
 
 You can directly use the shell script `simulate_data.sh`.  
@@ -262,7 +257,7 @@ The parameter `--output_dir` must be specified, while all other parameters are o
 For detailed parameter descriptions (see [Parameter](#parameter)).
 
 ```bash
-bash simulate_data.sh --output_dir ./sim_results
+bash simulate_data.sh -o out
 ```
 
 Check all available options with:
@@ -326,10 +321,9 @@ python simulated_data.py \
 ## 8. Demo:
 
 ```
-bash simulate_data.sh -o ../data/simulate_data -t 100
-bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result lethal normal 8
+bash simulate_data.sh -o ../demo/simulate_data -t 100
+bash cyberDMR.sh -i ./demo/input -o ./demo/output -g1 lethal -g2 normal -q 0.01
 ```
-
 
 ## 9. Release Notes
 
@@ -337,7 +331,6 @@ bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result l
 
 **Release Date:** 2025-05-13
 **Status:** Initial release
-
 
 ### Release Notes – cyberDMR v1.1
 
@@ -347,8 +340,6 @@ bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result l
 - Fixed the "Maximum Likelihood optimization failed" error in certain edge cases during model fitting.
 - Added simulated datasets for multiple scenarios to demonstrate tool behavior under different conditions.
 - Expanded and clarified usage instructions.
-
-
 
 If you use **cyberDMR** in your research, please cite the following paper:
 

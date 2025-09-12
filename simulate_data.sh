@@ -30,8 +30,8 @@ seed=42
 threads=1
 
 simulate_py="./script/simulated_data.py"
-merge_sh="./script/merage_simulated_samples.sh"
-cyberDMR_sh="./script/run_simulate_cyberDMR.sh"
+merge_sh="./script/merge_simulated_samples.sh"
+cyberDMR_sh="./cyberDMR.sh"
 
 # -------------------------------
 # Help function
@@ -129,20 +129,4 @@ awk 'NR>1{len=$3-$2;print len"\t"$4}' ${output_dir}/DMRs.txt | \
 echo "Step 2: Merge data and convert format"
 bash ${merge_sh} ${output_dir}
 
-# -------------------------------
-# Step 3: Run cyberDMR
-# -------------------------------
-echo "Step 3: Detect DMRs"
-group1="treatment"
-group2="control"
-threads=4
-bash ${cyberDMR_sh} ${group1} ${group2} ${threads}
-#{
-#    echo " -a, --dense_ratio NUM Dense region ratio (default: $dense_ratio)"
-#    echo " -S, --seed NUM Random seed (default: $seed)"
-#    echo " -h, --help Show help"
-#    exit 0
-#}
-
 echo "[INFO] All processes has finished"
-
