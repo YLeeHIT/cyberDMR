@@ -9,7 +9,23 @@
 
 **cyberDMR** is a robust and high-sensitivity approach for differentially methylated regions detection.
 
-### Introduction
+## Table of Contents
+
+[Introduction](#1-introduction)  
+[Installation](#2-installation)
+[Usage](#3-usage)  
+[Arguments](#4-arguments)  
+[Input Format](#5-input-format)  
+    - [Input File Requirements](#input-file-requirements)  
+    - [Lab File Requirements](#lab-file-requirements)  
+[Output Format](#6-output-format)  
+[Simulated Data](#7-simulated-data)  
+    - [Run](#run)  
+    - [Parameter](#parameter)  
+[Demo](#8-demo)  
+[Release Notes](#9-release-notes)
+
+## 1. Introduction
 Differentially methylated regions (DMRs) are key genomic features reflecting changes in DNA methylation status. Accurate identification of DMRs is crucial for investigating tissue-specific regulation, disease mechanisms, and population-level epigenetic variation.
 
 ### Features
@@ -19,7 +35,8 @@ Differentially methylated regions (DMRs) are key genomic features reflecting cha
 - Weighted beta regression with LRT for statistical inference
 - Identifiying significant DMRs via BH correction and F-statitics
 
-## 1. Installation
+
+## 2. Installation
 ```bash
 ### Clone the repository
 git clone https://github.com/YLeeHIT/cyberDMR.git
@@ -35,7 +52,7 @@ pip install -r requirements.txt
 
 ---
 
-## 2. Usage
+## 3. Usage
 
 ```bash
 bash cyberDMR.sh --in-dir <indir> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
@@ -51,7 +68,7 @@ For usage examples, see **8. Demo**
 
 ---
 
-## 3. Arguments
+## 4. Arguments
 
 | Parameter               | Required | Description                               | Example                |
 |-------------------------|----------|-------------------------------------------|------------------------|
@@ -125,7 +142,7 @@ F-statistic threshold.
 
 ---
 
-## 4. Input format
+## 5. Input format
 
 <div align="center">
     <img src="figure/pipeline.jpg" alt="cyberDMR pipeline", width="600"/>
@@ -184,7 +201,7 @@ chr1    113945  0.3926  31
 
 ---
 
-## 5. Output Format
+## 6. Output Format
 
 All results will be written to the specified output directory. The following files are generated:
 
@@ -221,7 +238,7 @@ chr19   315493  315875  8       0.754   0.9461  0.1922  19.3177 0.000934        
 
 ---
 
-## 6. Simulated Data
+## 7. Simulated Data
 
 We provide a simulation script `simulate_data.sh` for testing and benchmarking purposes. This script includes **three main functions**:
 
@@ -306,7 +323,7 @@ python simulated_data.py \
 
 ---
 
-## 7. Demo:
+## 8. Demo:
 
 ```
 bash simulate_data.sh -o ../data/simulate_data -t 100
@@ -314,7 +331,7 @@ bash cyberDMR.sh ./data/real_data/chr22 ./data/real_data/chr22/cyberDMR_result l
 ```
 
 
-## Release Notes
+## 9. Release Notes
 
 ### Release Notes – cyberDMR v1.0
 
