@@ -11,19 +11,19 @@
 
 ## Table of Contents
 
-[Introduction](#1-introduction)  
-[Installation](#2-installation)
-[Usage](#3-usage)  
-[Arguments](#4-arguments)  
-[Input Format](#5-input-format)  
-    - [Input File Requirements](#input-file-requirements)  
-    - [Lab File Requirements](#lab-file-requirements)  
-[Output Format](#6-output-format)  
-[Simulated Data](#7-simulated-data)  
+- [Introduction](#1-introduction)  
+- [Installation](#2-installation)
+- [Usage](#3-usage)
+- [Arguments](#4-arguments)
+- [Input Format](#5-input-format)  
+    - [Input File Format Requirements](#input-file-format-requirements)  
+    - [Lab File Format Requirements](#lab-file-format-requirements)  
+- [Output Format](#6-output-format)  
+- [Simulated Data](#7-simulated-data)  
     - [Run](#run)  
     - [Parameter](#parameter)  
-[Demo](#8-demo)  
-[Release Notes](#9-release-notes)
+- [Demo](#8-demo)  
+- [Release Notes](#9-release-notes)
 
 ## 1. Introduction
 Differentially methylated regions (DMRs) are key genomic features reflecting changes in DNA methylation status. Accurate identification of DMRs is crucial for investigating tissue-specific regulation, disease mechanisms, and population-level epigenetic variation.
@@ -151,7 +151,7 @@ F-statistic threshold.
 Before running `cyberDMR.sh`, you can provide the directory containing all sample files using the `--in-dir` option. In this case, cyberDMR will automatically generate the `in_cyber.lab` file.  
 Alternatively, you can supply your own lab file with sample paths and grouping information using the `--lab` option. cyberDMR will also recognize this file and proceed with the analysis.
 
-### Input File Requirements
+### Input File Format Requirements
 - Input files should be tab-delimited text (`.tsv` or `.bed`-like format) without a header.  
 - Each input file name must include the group label (e.g., `HG002_treatment.tsv`, `HG003_control.tsv`).
 - Each file should contain exactly four columns in the following order:
@@ -317,7 +317,7 @@ python simulated_data.py \
 | `--dmr_inconsis_per`    | ❌       | Proportion of inconsistent DMRs                           | `0`           |
 | `--dmr_sub_per`         | ❌       | Proportion of sub DMRs                                    | `0`           |
 | `--density`             | ❌       | CpG density type: `mix`, `dense`, or `sparse`             | `mix`         |
-| `--dense_ratio`         | ❌       | Proportion of dense regions (only applies if `mix`)       | `0.35         |
+| `--dense_ratio`         | ❌       | Proportion of dense regions (only applies if `mix`)       | `0.35 `        |
 | `--seed`                | ❌       | Random seed                                               | `42`          |
 | `--threads`             | ❌       | Number of threads used by cyberDMR                        | `1`           |
 
