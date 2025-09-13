@@ -146,7 +146,7 @@ F-statistic threshold.
 ## 5. Input format
 
 <div align="center">
-    <img src="figure/pipeline.jpg" alt="cyberDMR pipeline", width="600"/>
+    <img src="figure/cyberDMR_pipeline.jpg" alt="cyberDMR pipeline", width="600"/>
 </div >
 
 Before running `cyberDMR.sh`, you can provide the directory containing all sample files using the `-i` option. In this case, cyberDMR will automatically generate the `in_cyber.lab` file.  
