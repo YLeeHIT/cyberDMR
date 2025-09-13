@@ -65,7 +65,7 @@ bash cyberDMR.sh --help
 ```
 
 For detailed parameter descriptions, see [4. Arguments](#4-arguments).
-For usage examples, [8. Demo](#4-demo)
+For usage examples, [8. Demo](#8-demo)
 
 ---
 
