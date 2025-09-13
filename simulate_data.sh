@@ -25,13 +25,12 @@ dmr_notable_per=0.01
 dmr_inconsis_per=0
 dmr_sub_per=0
 density="mix"
-dense_ratio=0.3
+dense_ratio=0.5
 seed=42
 threads=1
 
 simulate_py="./script/simulated_data.py"
 merge_sh="./script/merge_simulated_samples.sh"
-cyberDMR_sh="./cyberDMR.sh"
 
 # -------------------------------
 # Help function
@@ -117,11 +116,6 @@ python "${simulate_py}" \
     --density "$density" \
     --dense_ratio "$dense_ratio" \
     --seed "$seed"
-
-# Record simulation summary
-parafile="${output_dir}/para.log"
-awk 'NR>1{len=$3-$2;print len"\t"$4}' ${output_dir}/DMRs.txt | \
-    datamash mean 1,2 |awk '{print "\nSimulated result:\nMean(len)\t"$1"\nMean(CpGs)\t"$2}' >> ${parafile}
 
 # -------------------------------
 # Step 2: Merge and convert
