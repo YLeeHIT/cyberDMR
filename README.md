@@ -12,19 +12,19 @@
 
 ## Table of Contents
 
-- [Introduction](#1-introduction)  
-- [Installation](#2-installation)
-- [Usage](#3-usage)
-- [Arguments](#4-arguments)
-- [Input Format](#5-input-format)  
+- [1. Introduction](#1-introduction)  
+- [2. Installation](#2-installation)
+- [3. Usage](#3-usage)
+- [4. Arguments](#4-arguments)
+- [5. Input Format](#5-input-format)  
     - [Input File Format Requirements](#input-file-format-requirements)  
     - [Lab File Format Requirements](#lab-file-format-requirements)  
-- [Output Format](#6-output-format)  
-- [Simulated Data](#7-simulated-data)  
+- [6. Output Format](#6-output-format)  
+- [7. Simulated Data](#7-simulated-data)  
     - [Run](#run)  
     - [Parameter](#parameter)  
-- [Demo](#8-demo)  
-- [Release Notes](#9-release-notes)
+- [8. Demo](#8-demo)  
+- [9. Release Notes](#9-release-notes)
 
 ## 1. Introduction
 Differentially methylated regions (DMRs) are key genomic features reflecting changes in DNA methylation status. Accurate identification of DMRs is crucial for investigating tissue-specific regulation, disease mechanisms, and population-level epigenetic variation.
@@ -64,8 +64,8 @@ Check all available options with:
 bash cyberDMR.sh --help
 ```
 
-For detailed parameter descriptions, see **3. Arguments**.
-For usage examples, see **8. Demo**
+For detailed parameter descriptions, see [4. Arguments](#4-arguments).
+For usage examples, [8. Demo](#4-demo)
 
 ---
 
@@ -101,7 +101,7 @@ Names of the two groups must be provided.
 ### `--in-dir`
 Supports both absolute and relative paths.  
 Should point to the directory containing input files formatted.  
-When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [Input format](#4-input-format)).  
+When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [5. Input format](#5-input-format)).  
 
 ### `--cyber-lab`
 If the user has already prepared a `lab` file that meets the **Input** requirements, it can be provided via this parameter instead of using `--in-dir`.  
