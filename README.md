@@ -148,8 +148,8 @@ F-statistic threshold.
     <img src="figure/pipeline.jpg" alt="cyberDMR pipeline", width="600"/>
 </div >
 
-Before running `cyberDMR.sh`, you can provide the directory containing all sample files using the `--in-dir` option. In this case, cyberDMR will automatically generate the `in_cyber.lab` file.  
-Alternatively, you can supply your own lab file with sample paths and grouping information using the `--lab` option. cyberDMR will also recognize this file and proceed with the analysis.
+Before running `cyberDMR.sh`, you can provide the directory containing all sample files using the `-i` option. In this case, cyberDMR will automatically generate the `in_cyber.lab` file.  
+Alternatively, you can supply your own lab file with sample paths and grouping information using the `-lab` option. cyberDMR will also recognize this file and proceed with the analysis.
 
 ### Input File Format Requirements
 - Input files should be tab-delimited text (`.tsv` or `.bed`-like format) without a header.  
@@ -244,7 +244,7 @@ We provide a simulation script `simulate_data.sh` for testing and benchmarking p
 
 1. **Generate simulated datasets**  
     - Supports multiple scenarios, including variation in DMR length, CpG density, methylation difference, coverage, and sample size.  
-    - Users may also directly call `simulated_data.py` for fine-grained control (see [Parameter](#parameter)).  
+    - Users may also directly call `simulated_data.py` for fine-grained control (see [`data/Simulation.para`](data/Simulation.para) for detailed parameters).  
 
 2. **Prepare tool-specific input formats**  
     - Converts the simulated data into input formats required by six DMR detection tools:  
@@ -253,11 +253,11 @@ We provide a simulation script `simulate_data.sh` for testing and benchmarking p
 ### Run
 
 You can directly use the shell script `simulate_data.sh`.  
-The parameter `--output_dir` must be specified, while all other parameters are optional.  
+The parameter `-o, --output_dir` must be specified, while all other parameters are optional.  
 For detailed parameter descriptions (see [Parameter](#parameter)).
 
 ```bash
-bash simulate_data.sh -o out
+bash simulate_data.sh -o <outdir> [<optional>]
 ```
 
 Check all available options with:
@@ -290,31 +290,32 @@ python simulated_data.py \
     --seed 42
 ```
 
-
 ### Parameter
 
-| Parameter               | Required | Description                                               | Default       |
-|-------------------------|----------|-----------------------------------------------------------|---------------|
-| `--output_dir`          | ✅       | Output directory to store simulated data and results      | *(no default)*|
-| `--total_dmr`           | ❌       | Total number of DMR regions to simulate                   | `10000`       |
-| `--mean_delta`          | ❌       | Average methylation difference between groups             | `0.25`        |
-| `--n_control`           | ❌       | Number of control samples                                 | `10`          |
-| `--n_treatment`         | ❌       | Number of treatment samples                               | `10`          |
-| `--coverage_mean`       | ❌       | Mean sequencing coverage                                  | `30`          |
-| `--coverage_std`        | ❌       | Standard deviation of coverage                            | `5`           |
-| `--chr_name`            | ❌       | Chromosome name to simulate DMRs                          | `chr1`        |
-| `--start_pos`           | ❌       | Start position for simulation                             | `100000`      |
-| `--length_mean`         | ❌       | Mean DMR region length                                    | `1000`        |
-| `--length_std`          | ❌       | Standard deviation of DMR length                          | `100`         |
-| `--max_cpgs`            | ❌       | Maximum number of CpGs per DMR                            | `100`         |
-| `--dmr_per`             | ❌       | Proportion of good DMRs                                   | `0.19`        |
-| `--dmr_notable_per`     | ❌       | Proportion of notable DMRs                                | `0.01`        |
-| `--dmr_inconsis_per`    | ❌       | Proportion of inconsistent DMRs                           | `0`           |
-| `--dmr_sub_per`         | ❌       | Proportion of sub DMRs                                    | `0`           |
-| `--density`             | ❌       | CpG density type: `mix`, `dense`, or `sparse`             | `mix`         |
-| `--dense_ratio`         | ❌       | Proportion of dense regions (only applies if `mix`)       | `0.35 `        |
-| `--seed`                | ❌       | Random seed                                               | `42`          |
-| `--threads`             | ❌       | Number of threads used by cyberDMR                        | `1`           |
+
+| Parameter | Required | Description | Default |
+|-----------|----------|-------------|---------|
+| `-o, --output_dir` | ✅ | Output directory | `./output` |
+| `-t, --total_dmr` | ❌ | Total number of simulated DMRs | `10000` |
+| `-d, --mean_delta` | ❌ | Mean methylation delta | `0.25` |
+| `-c, --n_control` | ❌ | Number of control samples | `10` |
+| `-e, --n_treatment` | ❌ | Number of treatment samples | `10` |
+| `-m, --coverage_mean` | ❌ | Mean coverage depth | `30` |
+| `-s, --coverage_std` | ❌ | Coverage standard deviation | `5` |
+| `-r, --chr_name` | ❌ | Chromosome name | `chr1` |
+| `-p, --start_pos` | ❌ | Start position for DMR simulation | `100000` |
+| `-l, --length_mean` | ❌ | Mean DMR length | `1000` |
+| `-z, --length_std` | ❌ | Standard deviation of DMR length | `100` |
+| `-x, --max_cpgs` | ❌ | Maximum CpGs per DMR | `100` |
+| `-q, --dmr_per` | ❌ | Proportion of good DMRs | `0.19` |
+| `-n, --dmr_notable_per` | ❌ | Proportion of notable DMRs | `0.01` |
+| `-i, --dmr_inconsis_per` | ❌ | Proportion of inconsistent DMRs | `0` |
+| `-u, --dmr_sub_per` | ❌ | Proportion of sub DMRs | `0` |
+| `-y, --density` | ❌ | Density mode: `mix` / `dense` / `sparse` | `mix` |
+| `-a, --dense_ratio` | ❌ | Ratio of dense regions | `0.3` |
+| `-S, --seed` | ❌ | Random seed | `42` |
+| `-T, --threads` | ❌ | Number of threads for cyberDMR | `1` |
+| `-h, --help` | ❌ | Show help message and exit | – |
 
 ---
 
@@ -339,7 +340,7 @@ bash cyberDMR.sh -i ./demo/input -o ./demo/output -g1 lethal -g2 normal -q 0.01
 
 - Fixed the "Maximum Likelihood optimization failed" error in certain edge cases during model fitting.
 - Added simulated datasets for multiple scenarios to demonstrate tool behavior under different conditions.
-- Expanded and clarified usage instructions.
+- Expanded usage instructions and added demo.
 
 If you use **cyberDMR** in your research, please cite the following paper:
 
