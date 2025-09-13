@@ -313,7 +313,7 @@ python simulated_data.py \
 | `-i, --dmr_inconsis_per` | ❌ | Proportion of inconsistent DMRs | `0` |
 | `-u, --dmr_sub_per` | ❌ | Proportion of sub DMRs | `0` |
 | `-y, --density` | ❌ | Density mode: `mix` / `dense` / `sparse` | `mix` |
-| `-a, --dense_ratio` | ❌ | Ratio of dense regions | `0.35 |
+| `-a, --dense_ratio` | ❌ | Ratio of dense regions | `0.35 `|
 | `-S, --seed` | ❌ | Random seed | `42` |
 | `-T, --threads` | ❌ | Number of threads for cyberDMR | `1` |
 | `-h, --help` | ❌ | Show help message and exit | – |
