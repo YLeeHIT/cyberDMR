@@ -1,4 +1,6 @@
-# cyberDMR
+<div align="left">
+    <img src="figure/cyberDMR_logo.png" alt="cyberDMR logo", width="300"/>
+</div >
 
 ![Version](https://img.shields.io/badge/version-1.1-blue)
 ![Language](https://img.shields.io/badge/language-python-blue)
@@ -8,9 +10,6 @@
 ![Platform](https://img.shields.io/badge/platform-linux%20|%20macOS-brightgreen)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17110291.svg)](https://doi.org/10.5281/zenodo.17110291)
 
-<div align="left">
-    <img src="figure/cyberDMR_logo.png" alt="cyberDMR logo", width="200"/>
-</div >
 
 ## Table of Contents
 
