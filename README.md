@@ -312,7 +312,7 @@ python simulated_data.py \
 | `-i, --dmr_inconsis_per` | ❌ | Proportion of inconsistent DMRs | `0` |
 | `-u, --dmr_sub_per` | ❌ | Proportion of sub DMRs | `0` |
 | `-y, --density` | ❌ | Density mode: `mix` / `dense` / `sparse` | `mix` |
-| `-a, --dense_ratio` | ❌ | Ratio of dense regions | `0.3` |
+| `-a, --dense_ratio` | ❌ | Ratio of dense regions | `0.35 |
 | `-S, --seed` | ❌ | Random seed | `42` |
 | `-T, --threads` | ❌ | Number of threads for cyberDMR | `1` |
 | `-h, --help` | ❌ | Show help message and exit | – |
@@ -321,8 +321,17 @@ python simulated_data.py \
 
 ## 8. Demo:
 
-```
+We provide a `demo/` folder containing example input files and expected results.  
+Users can quickly test the workflow with the following commands:
+
+
+```bash
+# Run simulated data generation
 bash simulate_data.sh -o ../demo/simulate_data -t 100
+```
+
+```bash
+# Run cyberDMR on the demo input
 bash cyberDMR.sh -i ./demo/input -o ./demo/output -g1 lethal -g2 normal -q 0.01
 ```
 
