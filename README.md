@@ -328,7 +328,7 @@ Users can quickly test the workflow with the following commands:
 
 ```bash
 # Run simulated data generation
-bash simulate_data.sh -o ../demo/simulate_data -t 100
+bash simulate_data.sh -o ./demo/simulate_data -t 100
 ```
 
 ```bash
