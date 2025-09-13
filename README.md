@@ -8,7 +8,9 @@
 ![Platform](https://img.shields.io/badge/platform-linux%20|%20macOS-brightgreen)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17110291.svg)](https://doi.org/10.5281/zenodo.17110291)
 
-**cyberDMR** is a robust and high-sensitivity approach for differentially methylated regions detection.
+<div align="left">
+    <img src="figure/cyberDMR_logo.png" alt="cyberDMR logo", width="200"/>
+</div >
 
 ## Table of Contents
 
@@ -27,7 +29,7 @@
 - [9. Release Notes](#9-release-notes)
 
 ## 1. Introduction
-Differentially methylated regions (DMRs) are key genomic features reflecting changes in DNA methylation status. Accurate identification of DMRs is crucial for investigating tissue-specific regulation, disease mechanisms, and population-level epigenetic variation.
+**cyberDMR** is a robust and high-sensitivity approach for differentially methylated regions (DMRs) detection.
 
 ### Features
 - Base-level smoothing for low-coverage CpGs
@@ -35,7 +37,6 @@ Differentially methylated regions (DMRs) are key genomic features reflecting cha
 - Seed-guided clustering for consistent CpG grouping
 - Weighted beta regression with LRT for statistical inference
 - Identifiying significant DMRs via BH correction and F-statitics
-
 
 ## 2. Installation
 ```bash
