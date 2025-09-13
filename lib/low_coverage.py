@@ -13,13 +13,13 @@ def generate_methylation_data(chr_name="chr1", num_points=1000, coverage_range=(
     """
     Generate simulated CpG methylation data, ensuring 80% of sites are fixed and 20% of sites vary randomly
     
-    Parameters：
+    Parameters:
     - chr_name: Chromosome name
     - num_points:  Total number of CpG sites to generate
     - coverage_range: Tuple specifying the range for coverage, as (min_coverage, max_coverage)
     - meth_range: Tuple specifying the range for methylation level, as (min_meth, max_meth)
 
-    Returns：
+    Returns:
     - pandas DataFrame:A DataFrame with columns: 'Chr', 'Pos', 'Meth_Level', 'Coverage'
     """
     np.random.seed()
@@ -190,12 +190,12 @@ def process_samples(sample_data, coverage_threshold=5, max_distance=500):
     Sequentially processes methylation data for each sample using a Numba-accelerated, GIMMEcpg-style imputation method
 
     Parameters:
-    - sample_data: List[Dict]，A list of dictionaries, where each dictionary represents a sample and contains the keys 'sample', 'group', and 'data'
+    - sample_data: List[Dict], A list of dictionaries, where each dictionary represents a sample and contains the keys 'sample', 'group', and 'data'
     - coverage_threshold:  The threshold for defining low coverage
     - max_distance: The maximum allowable distance for considering left and right neighbors during imputation
 
     Returns:
-    - List[Dict]，A list of dictionaries with the same structure as the input sample_data, but where the value for the 'data' key in each dictionary is the DataFrame after imputation
+    - List[Dict], A list of dictionaries with the same structure as the input sample_data, but where the value for the 'data' key in each dictionary is the DataFrame after imputation
     """
     processed_results = []
 
@@ -206,7 +206,7 @@ def process_samples(sample_data, coverage_threshold=5, max_distance=500):
 
         try:
             processed_df = fill_low_coverage_cpg_numba(df, coverage_threshold, max_distance)
-            print(f"Success {sample} (group: {group}) Interpolation completed")
+            #print(f"Success {sample} (group: {group}) Interpolation completed")
             processed_results.append({
                 'sample': sample,
                 'group': group,
@@ -227,13 +227,13 @@ def process_samples_parallel(sample_data, coverage_threshold=5, max_distance=500
     Concurrently processes data for multiple samples using multiple threads. This method is suitable for cases with a large number of samples that can be processed independently
 
     Parameters:
-    - sample_data: List[Dict]，A list of dictionaries, where each dictionary contains information for a sample, including keys like 'sample', 'group', and 'data'
+    - sample_data: List[Dict], A list of dictionaries, where each dictionary contains information for a sample, including keys like 'sample', 'group', and 'data'
     - coverage_threshold: The coverage threshold
     - max_distance:  The maximum distance to consider for neighbors during imputation
     - num_threads:  The number of concurrent threads to use (default is 4)
 
     Returns:
-    - List[Dict]，A list of dictionaries containing the processed data for each sample. The order of items in the list is maintained consistently with the input sample_data
+    - List[Dict], A list of dictionaries containing the processed data for each sample. The order of items in the list is maintained consistently with the input sample_data
     """
     def process_one(entry):
         sample = entry['sample']
@@ -241,7 +241,7 @@ def process_samples_parallel(sample_data, coverage_threshold=5, max_distance=500
         df = entry['data']
         try:
             processed_df = fill_low_coverage_cpg_numba(df, coverage_threshold, max_distance)
-            print(f"Success: {sample} has completed")
+            #print(f"Success: {sample} has completed")
             return {'sample': sample, 'group': group, 'data': processed_df}
         except Exception as e:
             print(f"Failure: {sample} has an error: {e}")

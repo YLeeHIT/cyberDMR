@@ -245,5 +245,5 @@ echo "[INFO] Running cyberDMR ..."
 # -----------------------------
 if compgen -G "${outdir}/chr"*".txt" > /dev/null; then
     echo "[INFO] Merging chr*.txt -> ${outdir}/cyberDMR_result.txt"
-    cat "${outdir}/chr"*".txt" | sort -k1,1V -k2,2n -k3,3n > "${outdir}/cyberDMR_result.txt"
+    cat "${outdir}/chr"*".txt" |grep -v "^chromosome" | sort -k1,1V -k2,2n -k3,3n > "${outdir}/cyberDMR_result.txt"
 fi

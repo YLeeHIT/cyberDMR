@@ -39,8 +39,8 @@ def generate_simulated_dmr_data(num_rows=1000, p_value_threshold=0.05, group1="g
 def adjust_p_values(df, group1="g1", group2="g2", qvalue=0.05):
     """
     Perform Benjamini-Hochberg (BH) correction on the given DMR data and return two DataFrames: 
-    1. dmr_data_with_padj：This DataFrame contains the original p-values and the adjusted p-values.
-    2. significant_dmr_data：This DataFrame retains only rows where the adjusted p-value is less than 0.05, and it includes only the adjusted p-values.
+    1. dmr_data_with_padj: This DataFrame contains the original p-values and the adjusted p-values.
+    2. significant_dmr_data: This DataFrame retains only rows where the adjusted p-value is less than 0.05, and it includes only the adjusted p-values.
     """
 
     if df.empty:

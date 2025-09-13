@@ -76,4 +76,3 @@ def process_data(data, label, group1, group2, CpG_distance=500, CpG_count=5):
     block_ranges = {block: (group.index.min(), group.index.max()) for block, group in data2_filtered.groupby('Block')}
     
     return data2_filtered, block_ranges
-
