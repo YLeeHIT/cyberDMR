@@ -8,7 +8,7 @@
 ![Language](https://img.shields.io/badge/language-R-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-linux%20|%20macOS-brightgreen)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17110291.svg)](https://doi.org/10.5281/zenodo.17110291)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17115855.svg)](https://doi.org/10.5281/zenodo.17115855)
 
 
 ## Table of Contents
