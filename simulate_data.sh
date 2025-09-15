@@ -29,8 +29,9 @@ dense_ratio=0.5
 seed=42
 threads=1
 
-simulate_py="./script/simulated_data.py"
-merge_sh="./script/merge_simulated_samples.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+simulate_py="${SCRIPT_DIR}/script/simulated_data.py"
+merge_sh="${SCRIPT_DIR}/script/merge_simulated_samples.sh"
 
 # -------------------------------
 # Help function
