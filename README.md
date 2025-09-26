@@ -5,7 +5,6 @@
 ![Version](https://img.shields.io/badge/version-1.1-blue)
 ![Language](https://img.shields.io/badge/language-python-blue)
 ![Language](https://img.shields.io/badge/language-shell-4EAA25)
-![Language](https://img.shields.io/badge/language-R-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-linux%20|%20macOS-brightgreen)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17115855.svg)](https://doi.org/10.5281/zenodo.17115855)
@@ -56,7 +55,11 @@ pip install -r requirements.txt
 ## 3. Usage
 
 ```bash
+### Run with input file path
 bash cyberDMR.sh --in-dir <indir> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
+
+### Run with a file that contains input file paths
+bash cyberDMR.sh -lab <lab.txt> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
 ```
 
 Check all available options with:
@@ -92,7 +95,7 @@ For usage examples, [8. Demo](#8-demo)
 
 ### `--out-dir`
 Supports both absolute and relative paths.  
-This directory will store all output results, including per-chromosome files and the final merged and sorted file `cyberDMR_result.bed`.  
+This directory will store all output results, including per-chromosome files and the final merged and sorted file `cyberDMR_result.bed` (see [Output format](#6-output-format)).  
 
 ### `--group1`, `--group2`
 Names of the two groups must be provided.  
@@ -101,10 +104,10 @@ Names of the two groups must be provided.
 ### `--in-dir`
 Supports both absolute and relative paths.  
 Should point to the directory containing input files formatted.  
-When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [5. Input format](#5-input-format)).  
+When this parameter is provided, the program will automatically generate an `in_cyber.lab` file. File names must follow strict naming conventions (see [Input File Format Requirements](#input-file-format-requirements)).  
 
 ### `--cyber-lab`
-If the user has already prepared a `lab` file that meets the **Input** requirements, it can be provided via this parameter instead of using `--in-dir`.  
+If the user has already prepared a `lab` file that meets the **Input** requirements (see [Lab File Format Requirements](#lab-file-format-requirements)), it can be provided via this parameter instead of using `--in-dir`.  
 
 ### `--threads`
 Number of worker processes.  
