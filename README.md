@@ -27,7 +27,7 @@
 - [9. Release Notes](#9-release-notes)
 
 ## 1. Introduction
-**cyberDMR** is a robust and high-sensitivity approach for differentially methylated regions (DMRs) detection.
+**cyberDMR** is an accurate and robust approach for differentially methylated regions (DMRs) detection.
 
 ### Features
 - Base-level smoothing for low-coverage CpGs
@@ -358,8 +358,8 @@ bash cyberDMR.sh -i ./demo/input -o ./demo/output -g1 lethal -g2 normal -q 0.01
 If you use **cyberDMR** in your research, please cite the following paper:
 
 > **Li, Yang**, *et al.*
-> **cyberDMR: a robust and high-sensitivity approach for differentially methylated regions detection**
-> *Bioinformatics*, 2025 (under review)
+> **cyberDMR: accurate and robust identification of differentially methylated regions from WGS-derived methylomes**
+> *BMC Biology*, 2025 (under review)
 > [GitHub Project](https://github.com/YLeeHIT/cyberDMR)
 
 We appreciate your support!
