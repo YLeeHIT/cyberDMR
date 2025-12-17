@@ -8,10 +8,10 @@
 # -------------------------------
 # Default parameters
 # -------------------------------
-total_dmr=1000
+total_dmr=100
 mean_delta=0.25
-n_control=10
-n_treatment=10
+n_control=5
+n_treatment=5
 coverage_mean=30
 coverage_std=5
 output_dir="$(pwd)/output"
@@ -36,32 +36,13 @@ attempt_per_slot=200
 seed=42
 threads=1
 
-#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -n "${CYBERDMR_HOME:-}" && -d "$CYBERDMR_HOME"   ]]; then
-    SCRIPT_DIR="$CYBERDMR_HOME"
-elif [[ -n "${SLURM_SUBMIT_DIR:-}" && -d "$SLURM_SUBMIT_DIR"   ]]; then
-    SCRIPT_DIR="$SLURM_SUBMIT_DIR"
-else
-    _src="${BASH_SOURCE[0]:-${0}}"
-    while [ -L "$_src"   ]; do
-        _dir="$(cd -P "$(dirname "$_src")" && pwd)"
-        _src="$(readlink "$_src")"
-        [[ "$_src" != /*   ]] && _src="$_dir/$_src"
-    done
-    SCRIPT_DIR="$(cd -P "$(dirname "$_src")" && pwd)"
-fi
-
-echo "[INFO] SLURM_SUBMIT_DIR = ${SLURM_SUBMIT_DIR:-N/A}"
-echo "[INFO] SCRIPT_DIR       = ${SCRIPT_DIR}"
-
-simulate_py="${SCRIPT_DIR}/script/simulated_data.py"
-merge_sh="${SCRIPT_DIR}/script/merge_simulated_samples.sh"
-
 # -------------------------------
 # Help function
 # -------------------------------
 print_help() {
-    echo "Usage: bash $0 [options]"
+    echo "Usage: bash $0 --root <cyberDMR PATH> [options]"
+    echo "Required:"
+    echo "--root ROOTDIR The path of cyberDMR project"
     echo "Options:"
     echo " -t, --total_dmr NUM Total number of simulated DMRs (default: $total_dmr)"
     echo " -d, --mean_delta NUM Mean methylation delta (default: $mean_delta)"
@@ -92,7 +73,7 @@ print_help() {
     echo " -T, --threads NUM Number of threads for cyberDMR (default: $threads)"
     echo " -h, --help Show this help message and exit"
     echo "Example:"
-    echo " bash $0 -o $(pwd)/test -t 100"
+    echo " cd cyberDMR; bash $0 --root $(pwd) -o $(pwd)/test"
     exit 0
 }
 
@@ -101,6 +82,7 @@ print_help() {
 # -------------------------------
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -root) root_dir="$2"; shift 2 ;;
         -t|--total_dmr) total_dmr="$2"; shift 2 ;;
         -d|--mean_delta) mean_delta="$2"; shift 2 ;;
         -c|--n_control) n_control="$2"; shift 2 ;;
@@ -132,9 +114,19 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ -z "${root_dir:-}" ]]; then
+    echo "[ERROR] --root must be specified"
+    echo ""
+    print_help
+    exit
+fi
+
 # -------------------------------
 # Step 1: Simulate DMRs
 # -------------------------------
+source ~/miniconda3/bin/activate DM-cyberDMR
+
+simulate_py="${root_dir}/simulated_data.py"
 echo "Step 1: Simulate data"
 python "${simulate_py}" \
     --total_dmr "$total_dmr" \
@@ -167,26 +159,23 @@ python "${simulate_py}" \
 # -------------------------------
 # Step 2: Merge and convert
 # -------------------------------
-extract_sh="/home/user/liyang/project/methDmr/scripts/extract_DMR.sh"
+merge_sh="${root_dir}/script/merge_simulated_samples.sh"
 echo "Step 2: Merge data and convert format"
 bash ${merge_sh} ${output_dir}
-DMR_file="${output_dir}/DMRs.txt"
-bash ${extract_sh} ${DMR_file} ${output_dir}
+
+chr_dir=${output_dir}/chr
+test -d ${chr_dir} || mkdir ${chr_dir}
+mv ${output_dir}/chr*DMR  ${chr_dir}
+mv ${output_dir}/result ${output_dir}/input
 
 # -------------------------------
 # Step 3: Detect DMR
 # -------------------------------
-detect_sh="/home/user/liyang/project/methDmr/scripts/detect_DMR.sh"
+cyberDMR="${root_dir}/cyberDMR.py"
+in_dir=${output_dir}/input/formatted_cyberDMR
+out_dir=${output_dir}/output
 echo "Step Three: Detect DMRs"
-#fvalue=500000
-bash ${detect_sh} ${output_dir} ${chr_name} ${threads} all
-
-# -------------------------------
-# Step 4: Integrate result
-# -------------------------------
-integrate_sh="/home/user/liyang/project/methDmr/scripts/integrate_data.sh"
-echo "Step Four: Integrate result"
-bash ${integrate_sh} ${output_dir}
+python ${cyberDMR} -i ${in_dir} -g1 "treatment" -g2 "control" -chr "chr1" -f 150 -o ${out_dir}
 
 echo "[INFO] All process has finished"
 

@@ -24,6 +24,8 @@ python ${diffmethyltools_py} all_analysis \
     --ctr_data_negative_methylation_count_column_index 4 \
     --case_data_separator $'\t' \
     --ctr_data_separator $'\t' \
+    --max_q_value 0.05 \
+    --abs_min_diff 0.1 \
     2>"diffmethyltools_error.log"
 
 end_time=$(date +%s)

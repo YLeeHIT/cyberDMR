@@ -1747,52 +1747,54 @@ def simulate_mixed_regions_randomized(
     return df
 
 def main():
-    parser = argparse.ArgumentParser(description="Simulate DMR regions")
+    parser = argparse.ArgumentParser(description="Simulate DMR regions",
+                                     add_help=True,
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # —— Basic simulation parameters ——
-    parser.add_argument("--total_dmr", type=int, default=100, help="total number of simulated DMRs")
-    parser.add_argument("--mean_delta", type=float, default=0.3, help="target mean methylation difference (can be +/-)")
-    parser.add_argument("--n_control", type=int, default=5, help="number of control samples")
-    parser.add_argument("--n_treatment", type=int, default=5, help="number of treatment samples")
-    parser.add_argument("--coverage_mean", type=int, default=30, help="mean sequencing coverage per CpG")
-    parser.add_argument("--coverage_std", type=int, default=5, help="std of sequencing coverage per CpG")
+    parser.add_argument("--total_dmr", "-t", type=int, default=100, help="total number of simulated DMRs")
+    parser.add_argument("--mean_delta", "-d", type=float, default=0.3, help="target mean methylation difference (can be +/-)")
+    parser.add_argument("--n_control", "-c", type=int, default=5, help="number of control samples")
+    parser.add_argument("--n_treatment", "-e", type=int, default=5, help="number of treatment samples")
+    parser.add_argument("--coverage_mean", "-m", type=int, default=30, help="mean sequencing coverage per CpG")
+    parser.add_argument("--coverage_std", "-s", type=int, default=5, help="std of sequencing coverage per CpG")
 
     # —— Output and interval parameters ——
-    parser.add_argument("--output_dir", type=str, default="./out", help="output directory")
-    parser.add_argument("--chr_name", type=str, default="chr1", help="chromosome name")
-    parser.add_argument("--start_pos", type=int, default=10000, help="start genomic coordinate")
-    parser.add_argument("--length_mean", type=int, default=1000, help="mean region length (bp)")
-    parser.add_argument("--length_std", type=int, default=300, help="std of region length (bp)")
-    parser.add_argument("--max_cpgs", type=int, default=200, help="max CpGs per region (hard cap)")
+    parser.add_argument("--output_dir", "-o", type=str, default="./out", help="output directory")
+    parser.add_argument("--chr_name", "-r", type=str, default="chr1", help="chromosome name")
+    parser.add_argument("--start_pos", "-p", type=int, default=10000, help="start genomic coordinate")
+    parser.add_argument("--length_mean", "-l", type=int, default=1000, help="mean region length (bp)")
+    parser.add_argument("--length_std", "-z", type=int, default=300, help="std of region length (bp)")
+    parser.add_argument("--max_cpgs", "-x", type=int, default=200, help="max CpGs per region (hard cap)")
 
     # —— Proportion of various DMRs ——
-    parser.add_argument("--dmr_per", type=float, default=0.25, help="proportion of good DMRs")
-    parser.add_argument("--dmr_notable_per", type=float, default=0.1, help="proportion of notable DMRs")
-    parser.add_argument("--dmr_inconsis_per", type=float, default=0.1, help="proportion of inconsistent DMRs")
-    parser.add_argument("--dmr_sub_per", type=float, default=0.1, help="proportion of sub DMRs")
+    parser.add_argument("--dmr_per", "-q", type=float, default=0.25, help="proportion of good DMRs")
+    parser.add_argument("--dmr_notable_per", "-n", type=float, default=0.1, help="proportion of notable DMRs")
+    parser.add_argument("--dmr_inconsis_per", "-i", type=float, default=0.1, help="proportion of inconsistent DMRs")
+    parser.add_argument("--dmr_sub_per", "-u", type=float, default=0.1, help="proportion of sub DMRs")
 
     # —— CpG density and block variation ——
-    parser.add_argument("--density", type=str, choices=["dense", "sparse", "moderate"], default="moderate", help="CpG density mode")
-    parser.add_argument("--cpg_blockiness", action="store_true", help="enable block-wise density changes within a region")
+    parser.add_argument("--density", "-y", type=str, choices=["dense", "sparse", "moderate"], default="moderate", help="CpG density mode")
+    parser.add_argument("--cpg_blockiness", "-cb", action="store_true", help="enable block-wise density changes within a region")
     
     # —— missing CpG and sample control ——
-    parser.add_argument("--dmr_missing_max", type=float, default=0.1, help="CpG missing rate in DMR")
-    parser.add_argument("--sample_missing_max", type=float, default=0.1, help="sample missing rate within group")
+    parser.add_argument("--dmr_missing_max", "-cm", type=float, default=0.1, help="CpG missing rate in DMR")
+    parser.add_argument("--sample_missing_max", "-sm", type=float, default=0.1, help="sample missing rate within group")
 
     # —— good-DMR Consistency soft constraints and sampling parameters ——
-    parser.add_argument("--good_flip_rate_allow", type=float, default=0.05, help="allowed fraction of reverse-direction CpGs within a good-DMR")
-    parser.add_argument("--good_flip_magnitude_max", type=float, default=0.05, help="max |delta| allowed for reverse-direction CpGs in a good-DMR")
-    parser.add_argument("--good_precision", type=int, default=20, help="beta precision parameter for good-DMR generation")
+    parser.add_argument("--good_flip_rate_allow", "-gr", type=float, default=0.05, help="allowed fraction of reverse-direction CpGs within a good-DMR")
+    parser.add_argument("--good_flip_magnitude_max", "-gm", type=float, default=0.05, help="max |delta| allowed for reverse-direction CpGs in a good-DMR")
+    parser.add_argument("--good_precision", "-gp", type=int, default=20, help="beta precision parameter for good-DMR generation")
 
     # —— non-DMR Consistency soft constraints and sampling parameters ——
-    parser.add_argument("--no_delta_methylation", type=float, default=0.08, help="mean methylation difference for non-DMR")
-    parser.add_argument("--no_precision", type=int, default=20, help="beta precision parameter for non-DMR generation")
+    parser.add_argument("--no_delta_methylation", "-nd", type=float, default=0.08, help="mean methylation difference for non-DMR")
+    parser.add_argument("--no_precision", "-bp", type=int, default=20, help="beta precision parameter for non-DMR generation")
 
     # —— Operation and generation control ——
-    parser.add_argument("--min_gap", type=int, default=10, help="min inter-region gap when advancing along the chromosome (bp)")
-    parser.add_argument("--max_gap", type=int, default=50, help="max inter-region gap when advancing along the chromosome (bp)")
-    parser.add_argument("--seed", type=int, default=42, help="random seed")
-    parser.add_argument("--max_attempts_per_slot", type=int, default=200, help="max attempts for generating a region of a given class before skipping")
+    parser.add_argument("--min_gap", "-mn", type=int, default=10, help="min inter-region gap when advancing along the chromosome (bp)")
+    parser.add_argument("--max_gap", "-mx", type=int, default=50, help="max inter-region gap when advancing along the chromosome (bp)")
+    parser.add_argument("--seed", "-S", type=int, default=42, help="random seed")
+    parser.add_argument("--max_attempts_per_slot", "-a", type=int, default=200, help="max attempts for generating a region of a given class before skipping")
 
     args = parser.parse_args()
     os.makedirs(args.output_dir, exist_ok=True)

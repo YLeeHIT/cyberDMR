@@ -17,10 +17,10 @@ time Rscript ${methylasso_r} \
     --c2 $(ls noh_sorted_control_sample*tsv |tr '\n' ','|sed 's/,$//') \
     --cov 4 \
     --meth 5 \
-    --p 0.1 \
+    --q 0.05 \
     -c 5 \
     -d 0.1 \
-    -n 3 \
+    -n 5 \
     -o ${methylasso_result}
 
 end_time=$(date +%s)

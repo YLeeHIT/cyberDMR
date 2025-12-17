@@ -56,10 +56,10 @@ pip install -r requirements.txt
 
 ```bash
 ### Run with input file path
-python cyberDMR.py --in-dir <indir> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
+python cyberDMR.py -i <PATH> -o <PATH> -g1 <STR> -g2 <STR> [<optional>]
 
 ### Run with a file that contains input file paths
-python cyberDMR.py -lab <lab.txt> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
+python cyberDMR.py -lab <PATH> -o <PATH> -g1 <group1> -g2 <group2> [<optional>]
 ```
 
 Check all available options with:
@@ -80,7 +80,7 @@ For usage examples, [8. Demo](#8-demo)
 | `-g1, --group1`         | ✅        | Label of group 1 (e.g., treatment)        | `treatment`            |
 | `-g2, --group2`         | ✅        | Label of group 2 (e.g., control)          | `control`              |
 | `-i, --in-dir`          | ✅*       | Input files (auto-generate `cyber.lab`)   | `./input/`             |
-| `-lab, --cyber-lab`     | ✅*       | Path to an existing `cyber.lab` file      | `./cyber.lab`          |
+| `-lab, --cyber-lab`     | ✅*       | Path to an existing `cyber.lab` file      | `./in_cyber.lab`          |
 | `-t, --threads`         | ❌        | Number of worker processes                | `8`                    |
 | `-chr, --chroms`        | ❌        | Chromosome set specification              | `chr1,chr2,chr3`       |
 | `-d, --delta`           | ❌        | Delta threshold for DMR detection         | `0.1`                  |
@@ -89,7 +89,7 @@ For usage examples, [8. Demo](#8-demo)
 | `-cov, --min-cov`       | ❌        | Minimum CpG coverage to retain            | `5`                    |
 | `-fdis, --max-dist`     | ❌        | Maximum distance of adjacent CpGs         | `500`                  |
 | `-q, --qvalue`          | ❌        | BH-corrected p-value threshold            | `0.05`                 |
-| `-f, --Fvalue`          | ❌        | F statistic threshold                     | `1550`                   |
+| `-f, --Fvalue`          | ❌        | F statistic threshold                     | `150`                   |
 
 \* One of `--in-dir` or `--cyber-lab` must be provided.
 
@@ -114,7 +114,7 @@ Number of worker processes.
 It is recommended to set this equal to the number of chromosomes for best performance.  
 
 ### `--delta`
-Minimum methylation difference (Δ).  
+Minimum methylation difference (ΔM).  
 DMRs with Δ below this threshold will be filtered out.  
 
 ### `--cpg-distance`
@@ -140,9 +140,8 @@ Benjamini–Hochberg corrected p-value threshold.
 DMRs with q-values above this cutoff will be filtered out.  
 
 ### `--Fvalue`
-F-statistic threshold.  
-- Strict filtering: `20`  
-- Relaxed filtering: `5`  
+F-statistic threshold (default 150). 
+Recommended range: 100–150 for single-sample analyses; 150–500 for multi-sample analyses.  
 
 ---
 

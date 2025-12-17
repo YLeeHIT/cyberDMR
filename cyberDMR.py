@@ -3,6 +3,7 @@ import numpy as np
 import statsmodels.api as sm
 import warnings
 import argparse
+import shutil
 import re
 import os
 
@@ -478,13 +479,10 @@ def find_blocks_greedy(out_data, delta_m_mean_threshold=0.1, min_cpg_count=5, al
     dmr_summary_false_result = pd.DataFrame(dmr_summary_false, columns=[
         "chromosome", "start", "end", "count", f"{group1}_mean", f"{group2}_mean", "delta", "pvalue", "F", "pro_var"
     ])
-    dmr_summary_false_result.to_csv(os.path.join(out_dir, f"false_{chr_col}_cyberDMR.txt"), sep="\t", header=True, index=False)
+    #dmr_summary_false_result.to_csv(os.path.join(out_dir, f"false_{chr_col}_cyberDMR.txt"), sep="\t", header=True, index=False)
     ### BH multiple test correction
     dmr_blocks_with_padj, significant_dmr = adjust_p_values(dmr_summary_result, group1=group1, group2=group2, qvalue=qvalue)
     return dmr_blocks_with_padj, significant_dmr
-
-
-
 
 
 def compute_beta_params(
@@ -1119,8 +1117,19 @@ def merge_chr_results(out_dir: Path, pattern: str = "chr*.txt", out_name: str = 
     with out_fp.open("w", encoding="utf-8") as out:
         for _, _, _, raw in rows:
             out.write(raw + "\n")
+    
+    chr_dir = out_dir / "chr"
+    chr_dir.mkdir(parents=True, exist_ok=True)
+
+    for fp in files:
+        dest = chr_dir / fp.name
+        # shutil.move works across filesystems; overwrite protection:
+        if dest.exists():
+            dest.unlink()
+        shutil.move(str(fp), str(dest))
 
     print(f"[INFO] Merged {len(files)} files -> {out_fp} ({len(rows)} rows)")
+
 
 def parse_args() -> argparse.Namespace:
     """
@@ -1232,7 +1241,7 @@ def process_one_chromosome(in_chr, out_dir, group1, group2,
     # Step 1: Impute and merge data
     processed_samples = process_samples(sample_data, coverage_threshold=coverage_threshold, max_distance=max_distance)
     merged_data = merge_samples_fast(processed_samples)
-    merged_data.to_csv(os.path.join(out_dir, f"{in_chr}_merged_data_after_filling.txt"), sep="\t", header=True, index=False)
+    #merged_data.to_csv(os.path.join(out_dir, f"{in_chr}_merged_data_after_filling.txt"), sep="\t", header=True, index=False)
 
     # Step 2: CpG blocking
     out_data, block_ranges = process_data(merged_data, label, group1, group2, CpG_distance=CpG_distance, CpG_count=CpG_count)
@@ -1247,7 +1256,7 @@ def process_one_chromosome(in_chr, out_dir, group1, group2,
         Fvalue=Fvalue,
         out_dir=out_dir
     )
-    dmr_data_with_padj.to_csv(os.path.join(out_dir, f"no_adjuset_{in_chr}_cyberDMR.tmp"), sep="\t", header=True, index=False)
+    #dmr_data_with_padj.to_csv(os.path.join(out_dir, f"no_adjuset_{in_chr}_cyberDMR.tmp"), sep="\t", header=True, index=False)
     significant_dmr_data.to_csv(os.path.join(out_dir, f"{in_chr}_cyberDMR.txt"), sep="\t", header=True, index=False)
 
     print(f"Finished processing {in_chr}.")
@@ -1493,24 +1502,5 @@ def main():
     merge_chr_results(out_dir, pattern="chr*cyberDMR.txt", out_name="cyberDMR_result.bed")
     print("[INFO] All done.")
 
-
-def test(output_dir="test"):
-    os.makedirs(output_dir, exist_ok=True)
-    
-    df = process_one_chromosome(
-        in_chr="chr1",
-        out_dir=output_dir,
-        #group1="HP1",
-        #group2="HP2",
-        group1="treatment",
-        group2="control",
-        Fvalue=1,
-        cyber_lab="/home/user/liyang/project/methDmr/cyberDMR/samples_011/cyberDMR_result/in_cyber.lab"
-        #cyber_lab="/home/user/liyang/project/2fold/Homo_sapien/HG002/phased/chr/formatted_cyberDMR/cyberDMR_result/in_cyber.lab",
-    )
-    return df
-
 if __name__ == "__main__":
     main()
-    #test(output_dir="/home/user/liyang/project/2fold/Homo_sapien/HG002/phased/chr/formatted_cyberDMR/cyberDMR_result/chr22")
-    #test(output_dir="/home/user/liyang/project/methDmr/cyberDMR/samples_011/cyberDMR_result/test1")
