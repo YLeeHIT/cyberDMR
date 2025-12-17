@@ -161,7 +161,7 @@ def add_trailing_flanking_cpgs(
     rng=None,
 ):
     """
-    Add 3–10 CpGs ONLY within the trailing (end) window of the region (last 500 bp).
+    Add 3-10 CpGs ONLY within the trailing (end) window of the region (last 500 bp).
     - Positions are inside [region_end_final - window_bp + 1, region_end_final].
     - First `n_opposite` added CpGs have Δ opposite to `direction`; the rest random sign.
     - |Δ| for all added CpGs < delta_cap.
@@ -259,7 +259,7 @@ def add_trailing_flanking_cpgs_v2(
     rng=None,
 ):
     """
-    Add 3–10 CpGs ONLY within the trailing (end) window of the region (last 500 bp).
+    Add 3-10 CpGs ONLY within the trailing (end) window of the region (last 500 bp).
     - Positions are inside [region_end_final - window_bp + 1, region_end_final].
     - First `n_opposite` added CpGs have Δ opposite to `direction`; the rest random sign.
     - |Δ| for all added CpGs < delta_cap.
@@ -308,13 +308,8 @@ def add_trailing_flanking_cpgs_v2(
         signs[n_op:] = rng.choice([+1, -1], size=n_add - n_op)
         signs[-2] = -signs[-1]
 
-    # Small magnitudes in (low, delta_cap)
-    #delta_cap = float(min(delta_cap, 0.1))
-    #low_mag = min(0.01, max(1e-4, 0.5 * delta_cap))
     mags = np.clip(rng.uniform(0.5*delta_cap, delta_cap, size=n_add),1e-4,0.09)
 
-    # Sample control values for the new CpGs (consistent with main block)
-        
     new_ctrl = beta_dist.rvs(alpha_control, beta_control, size=n_add, random_state=rng)
     new_ctrl = np.clip(np.round(new_ctrl, 3), 0.001, 0.999)
 
@@ -444,12 +439,6 @@ def simulate_dmr_region_with_input_limit(
         else:
             control_vals[i] = np.random.uniform(low, high)
 
-    #precision = precision
-    #alpha_control = mean_control * precision
-    #beta_control = (1.0 - mean_control) * precision
-    #control_vals = beta.rvs(alpha_control, beta_control, size=len(cpg_sites))
-    #control_vals = np.clip(control_vals, 0.001, 0.999)
-    
     if mean_control <= 0.4:
         direction = +1
     elif mean_control >= 0.6:
@@ -461,16 +450,12 @@ def simulate_dmr_region_with_input_limit(
     additive = np.clip(additive, 0.0001, 0.9999)
 
     if direction == +1:
-        # upregulation：control < treatment
         treatment_vals = np.minimum(control_vals + additive, 0.999)
     else:
-        # downregulation:control > treatment
         treatment_vals = np.maximum(control_vals - additive, 0.001)
 
     control_vals = np.round(control_vals, 3)
     treatment_vals = np.round(treatment_vals ,3)
-    #control_vals = np.clip(control_vals, 0.0, 1.0)
-    #treatment_vals = np.clip(treatment_vals, 0.0, 1.0)
 
     # Allow a very small amount of minor reverse movement
     delta_vals = treatment_vals - control_vals
@@ -691,13 +676,6 @@ def simulate_nondmr_region(chr_name, region_start, region_end, no_delta_methylat
         else:
             control_vals[i] = np.random.uniform(low, high)
 
-
-    #precision = precision
-    #alpha_control = mean_control * precision
-    #beta_control = (1.0 - mean_control) * precision
-    #control_vals = beta.rvs(alpha_control, beta_control, size=len(cpg_sites))
-    #control_vals = np.clip(control_vals, 0.001, 0.999)
-    
     # Ensure that both upward and downward adjustments exist
     if mean_control <= 0.4:
         direction = +1
@@ -887,13 +865,10 @@ def shrink_ends_to_subdmr_soft(
     Note: Here, "Δ" refers to per-site delta = treatment - control.
     """
 
-    #sites_base = np.asarray(dmr["CpG_sites"], dtype=int)
     sites = np.asarray(dmr["CpG_sites"], dtype=int)
     flank_num = dmr["flank_num"]
     ctrl  = np.asarray(dmr["methylation_control"], dtype=float)
     trt   = np.asarray(dmr["methylation_treatment"], dtype=float)
-    #ctrl  = np.asarray(dmr["flank_methylation_control"], dtype=float)
-    #trt   = np.asarray(dmr["flank_methylation_treatment"], dtype=float)
 
     n = len(sites)
     if n == 0:
@@ -1046,14 +1021,11 @@ def simulate_group_samples_with_missing(
                 # Use beta distribution
                 coverage = int(np.clip(np.random.normal(coverage_mean, coverage_std), 1, 100))
                 mean_meth = meth_values[idx]
-                #alpha, beta_ = beta_params_from_mean_std(mean_meth, group_std)
-                #sample_meth = beta.rvs(alpha, beta_)
                 raw_meth = np.random.normal(loc=mean_meth, scale=group_std)
                 max_dev = 0.3 
                 low = max(0.0, mean_meth - max_dev)
                 high = min(1.0, mean_meth + max_dev)
                 sample_meth = float(np.clip(raw_meth, low, high))
-
 
                 all_samples[sample_key].append({
                     "chr": dmr["chr"],
@@ -1111,7 +1083,6 @@ def simulate_group_samples_with_missing_add_flanking(
     ]:
         for sample_id in range(1, n_samples + 1):
             sample_key = f"{group}_sample_{sample_id}"
-            #for idx, cpg_pos in enumerate(cpg_sites):
             for idx, cpg_pos in enumerate(flank_cpg_sites):
                 is_missing_cpg = idx in missing_cpg_indices
                 is_missing_sample = is_missing_cpg and (np.random.rand() < sample_missing_rate)
@@ -1122,8 +1093,6 @@ def simulate_group_samples_with_missing_add_flanking(
                 # Use beta distribution
                 coverage = int(np.clip(np.random.normal(coverage_mean, coverage_std), 1, 100))
                 mean_meth = meth_values[idx]
-                #alpha, beta_ = beta_params_from_mean_std(mean_meth, group_std)
-                #sample_meth = beta.rvs(alpha, beta_)
                 raw_meth = np.random.normal(loc=mean_meth, scale=group_std)
                 max_dev = 0.4 
                 low = max(0.0, mean_meth - max_dev)
@@ -1174,7 +1143,6 @@ def simulate_group_samples_with_missing_add_flanking_v2(
 ):
     os.makedirs(output_dir, exist_ok=True)
 
-    # 是否存在单样本组：只要有一组样本数为1，就启用“单样本模式”
     single_group_mode = (n_control == 1) or (n_treatment == 1)
 
     all_samples = {
@@ -1189,16 +1157,13 @@ def simulate_group_samples_with_missing_add_flanking_v2(
     flank_cpg_sites = dmr["flank_CpG_sites"]
     n_flank_cpgs = len(flank_cpg_sites)
 
-    # 如果不是单样本模式，按原逻辑生成缺失率和缺失位点
     if not single_group_mode:
         dmr_missing_rate = np.random.uniform(0, dmr_missing_max)
         sample_missing_rate = np.random.uniform(0, sample_missing_max)
 
         n_missing_cpgs = int(np.floor(dmr_missing_rate * n_cpgs))
-        # 注意：这里仍然是按原来逻辑，从 DMR 内 CpG 的 index 中抽
         missing_cpg_indices = set(random.sample(range(n_cpgs), n_missing_cpgs))
     else:
-        # 单样本模式：不启用缺失
         dmr_missing_rate = 0.0
         sample_missing_rate = 0.0
         missing_cpg_indices = set()
@@ -1211,23 +1176,18 @@ def simulate_group_samples_with_missing_add_flanking_v2(
             sample_key = f"{group}_sample_{sample_id}"
 
             for idx, cpg_pos in enumerate(flank_cpg_sites):
-                # 非单样本模式下才应用缺失逻辑
                 if not single_group_mode:
                     is_missing_cpg = idx in missing_cpg_indices
                     is_missing_sample = is_missing_cpg and (np.random.rand() < sample_missing_rate)
                     if is_missing_sample:
                         continue
 
-                # 覆盖度保持原来的随机逻辑
                 coverage = int(np.clip(np.random.normal(coverage_mean, coverage_std), 1, 100))
-
                 mean_meth = meth_values[idx]
 
                 if single_group_mode and n_samples == 1:
-                    # 单样本组：直接用 mean_meth，不再按方差模拟
                     sample_meth = float(np.clip(mean_meth, 0.0, 1.0))
                 else:
-                    # 原逻辑：在 mean_meth 周围按 group_std 波动
                     raw_meth = np.random.normal(loc=mean_meth, scale=group_std)
                     max_dev = 0.4
                     low = max(0.0, mean_meth - max_dev)
@@ -1258,8 +1218,6 @@ def simulate_group_samples_with_missing_add_flanking_v2(
         "dmr_missing_rate": round(dmr_missing_rate, 3),
         "sample_missing_rate": sample_missing_rate    
     }
-
-
 
 
 # Updated validation function, adding logic to assess mean values of sliding window sub-regions
@@ -1582,8 +1540,6 @@ def simulate_mixed_regions_randomized(
             pos=real_end + random.randint(min_gap, max_gap)
             end = pos + region_length
         
-        #end = pos + region_length
-
         region = None
         group_std = 0.05
         effective_delta = 0.0
@@ -1634,7 +1590,6 @@ def simulate_mixed_regions_randomized(
                 density=density                        
             )
             group_std = float(min(0.5, round(1.5 * abs(delta), 3)))
-            #group_std = float(min(0.25, round(abs(delta), 3)))
             effective_delta = delta
 
         else:  # good-DMR
@@ -1731,16 +1686,7 @@ def simulate_mixed_regions_randomized(
            continue
 
         real_end = region["flank_CpG_sites"][-1]
-
-        #if last_cat in {"good-DMR", "sub-DMR"}:
-       # if cat in {"good-DMR", "sub-DMR"}:
-       #     min_gaps, max_gaps = 500+min_gap, 500+max_gap
-       # elif cat in {"non-DMR","inconsistent-DMR","notable-DMR"}:
-       #     min_gaps, max_gaps = 100+min_gap, 100+max_gap
-       # else:
-       #     min_gaps, max_gaps = 501, 1000
         last_cat = cat 
-        #pos = advance_position(end, min_gap=min_gaps, max_gap=max_gaps)
 
     # Summary output
     rows = [{
@@ -1874,10 +1820,6 @@ def main():
         dmr_inconsis_per=args.dmr_inconsis_per,
         dmr_sub_per=args.dmr_sub_per,
 
-        #cpg_blockiness=args.cpg_blockiness,
-        #good_flip_rate_allow=args.good_flip_rate_allow,
-        #good_flip_magnitude_max=args.good_flip_magnitude_max,
-
         no_delta_methylation=args.no_delta_methylation,
         no_precision=args.no_precision,
 
@@ -1894,29 +1836,5 @@ def main():
     print("Simulation completed.")
     df.to_csv(f"{args.output_dir}/DMRs.txt",sep="\t",header=True,index=False)
 
-### 记得删除
-def test(output_dir="./test"):
-    os.makedirs(output_dir, exist_ok=True)
-    
-    df = simulate_mixed_regions_randomized(
-        total_dmr=200,
-        mean_delta=0.3,
-        n_control=3,
-        n_treatment=3,
-        output_dir=output_dir,
-        dmr_inconsis_per=0.1,
-        dmr_notable_per=0.1,
-        dmr_sub_per=0.1,
-        no_delta_methylation=0.08,
-        cpg_blockiness=False,
-        #min_gap=500,
-        #max_gap=600,
-        density="moderate",
-    )
-        
-    print("Simulation completed.")
-    df.to_csv(f"{output_dir}/DMRs.txt",sep="\t",header=True,index=False)
-
 if __name__ == "__main__":
-    #test("./test26")
     main()
