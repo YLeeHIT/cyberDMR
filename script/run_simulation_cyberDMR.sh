@@ -73,7 +73,7 @@ print_help() {
     echo " -T, --threads NUM Number of threads for cyberDMR (default: $threads)"
     echo " -h, --help Show this help message and exit"
     echo "Example:"
-    echo " cd cyberDMR; bash $0 --root $(pwd) -o $(pwd)/test"
+    echo " cd cyberDMR; bash ./scripts/$0 --root $(pwd) -o $(pwd)/test"
     exit 0
 }
 

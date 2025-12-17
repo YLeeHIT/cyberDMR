@@ -1764,14 +1764,14 @@ def main():
     parser.add_argument("--chr_name", "-r", type=str, default="chr1", help="chromosome name")
     parser.add_argument("--start_pos", "-p", type=int, default=10000, help="start genomic coordinate")
     parser.add_argument("--length_mean", "-l", type=int, default=1000, help="mean region length (bp)")
-    parser.add_argument("--length_std", "-z", type=int, default=300, help="std of region length (bp)")
-    parser.add_argument("--max_cpgs", "-x", type=int, default=200, help="max CpGs per region (hard cap)")
+    parser.add_argument("--length_std", "-z", type=int, default=100, help="std of region length (bp)")
+    parser.add_argument("--max_cpgs", "-x", type=int, default=500, help="max CpGs per region (hard cap)")
 
     # —— Proportion of various DMRs ——
     parser.add_argument("--dmr_per", "-q", type=float, default=0.25, help="proportion of good DMRs")
-    parser.add_argument("--dmr_notable_per", "-n", type=float, default=0.1, help="proportion of notable DMRs")
-    parser.add_argument("--dmr_inconsis_per", "-i", type=float, default=0.1, help="proportion of inconsistent DMRs")
-    parser.add_argument("--dmr_sub_per", "-u", type=float, default=0.1, help="proportion of sub DMRs")
+    parser.add_argument("--dmr_notable_per", "-n", type=float, default=0.02, help="proportion of notable DMRs")
+    parser.add_argument("--dmr_inconsis_per", "-i", type=float, default=0.03, help="proportion of inconsistent DMRs")
+    parser.add_argument("--dmr_sub_per", "-u", type=float, default=0.05, help="proportion of sub DMRs")
 
     # —— CpG density and block variation ——
     parser.add_argument("--density", "-y", type=str, choices=["dense", "sparse", "moderate"], default="moderate", help="CpG density mode")

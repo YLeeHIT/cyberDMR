@@ -30,11 +30,16 @@
 **cyberDMR** is an accurate and robust approach for differentially methylated regions (DMRs) detection.
 
 ### Features
-- Base-level smoothing for low-coverage CpGs
-- CpG segmentation based on genomic distance and methylation concordance
-- Seed-guided clustering for consistent CpG grouping
-- Weighted beta regression with LRT for statistical inference
-- Identifiying significant DMRs via BH correction and F-statitics
+
+#### Weighted smoothing for low-coverage CpGs
+cyberDMR applies a distance-aware weighted smoothing strategy that integrates methylation signals from neighboring CpGs, improving methylation estimation accuracy in low-coverage and CpG-sparse genomic regions.
+
+#### Seed-guided clustering for precise DMR boundary detection
+By initiating from CpG sites with maximal methylation differences (ΔM) and extending only through consistently differential sites, cyberDMR constructs coherent DMR blocks and achieves accurate boundary delineation.
+
+#### Noise-resilient statistical framework
+cyberDMR combines an F-like statistic with weighted beta regression and likelihood-ratio testing to suppress intra-group methylation variability and robustly identify biologically consistent DMRs.
+
 
 ## 2. Installation
 ```bash
@@ -136,12 +141,13 @@ Maximum distance between adjacent CpGs for **clustering**.
 This parameter affects the clustering process. Suggested range: `300–1000` (default: `500`).  
 
 ### `--qvalue`
-Benjamini–Hochberg corrected p-value threshold.  
+Benjamini–Hochberg corrected p-value threshold (default: `0.05`).  
 DMRs with q-values above this cutoff will be filtered out.  
 
 ### `--Fvalue`
-F-statistic threshold (default 150). 
-Recommended range: 100–150 for single-sample analyses; 150–500 for multi-sample analyses.  
+F-statistic threshold (default: ``150``). 
+`100–150` for single-sample analyses; 
+`150–500` for multi-sample analyses.  
 
 ---
 
@@ -226,50 +232,44 @@ The file contains **11 tab-delimited columns**:
 8. **F_value** – F-statistic value  
 9. **p_value** – raw p-value  
 10. **q_value** – Benjamini–Hochberg adjusted p-value  
-11. **Pass** – whether the region passes both p-value and F-value filters (final output only keeps `True`)  
+11. **high_var_pro** – Proportion of CpG sites exhibiting high within-group variability 
 
 **Example** (`cyber_result.bed`):
 ```
-chr19   290632  290697  6       0.0681  0.2254  0.1573  31.7828 0.0003481       0.0006503       True
-chr19   291682  291986  45      0.2205  0.0291  -0.1914 47.9067 1.252e-26       1.161e-24       True
-chr19   294290  295539  65      0.4836  0.0629  -0.4208 33.1036 2.616e-40       6.564e-38       True
-chr19   310363  310457  8       0.8646  0.6734  -0.1912 25.7401 0.0001574       0.0003491       True
-chr19   310780  310961  8       0.9192  0.7596  -0.1596 46.8572 1.999e-05       6.887e-05       True
-chr19   311892  312029  10      0.8006  0.9647  0.1642  21.5986 3.107e-05       9.748e-05       True
-chr19   315493  315875  8       0.754   0.9461  0.1922  19.3177 0.000934        0.001422        True
+chr1    180998  181199  27      0.7526  0.9211  -0.1685 429.7448        2.893e-09       2.587e-08       0.4815
+chr1    181207  181286  17      0.8519  0.964   -0.1121 3297.0741       3.345e-07       1.695e-06       0.0
+chr1    195905  196498  5       0.799   0.3047  0.4943  166.8253        0.0006944       0.001407        0.0
+chr1    605057  605929  43      0.6778  0.3416  0.3361  235.6434        1.428e-12       1.973e-11       0.3721
+chr1    1700493 1700990 41      0.814   0.9558  -0.1418 167.7613        4.684e-14       7.911e-13       0.0244
 ```
 
 ---
 
 ## 7. Simulated Data
 
-We provide a simulation script `simulate_data.sh` for testing and benchmarking purposes. This script includes **three main functions**:
-
-1. **Generate simulated datasets**  
-    - Supports multiple scenarios, including variation in DMR length, CpG density, methylation difference, coverage, and sample size.  
-    - Users may also directly call `simulated_data.py` for fine-grained control (see [`data/Simulation.para`](data/Simulation.para) for detailed parameters).  
-
-2. **Prepare tool-specific input formats**  
-    - Converts the simulated data into input formats required by six DMR detection tools:  
-    - **cyberDMR**, **Metilene**, **HOME**, **BSmooth**, **MethyLasso**, **DiffMethylTools**  
+We provide a simulation script `simulated_data.py` for testing and benchmarking purposes.  
+This script generates simulated DMR datasets under diverse scenarios, including variations in DMR length, CpG density, methylation difference, sequencing coverage, and sample size.  
 
 ### Run
 
-You can directly use the shell script `simulate_data.sh`.  
+You can only generate the simulated data by calling the Python script `simulated_data.py` directly:
 The parameter `-o, --output_dir` must be specified, while all other parameters are optional.  
 For detailed parameter descriptions (see [Parameter](#parameter)).
 
+
+### Example
+
+Basic command:
 ```bash
-bash simulate_data.sh -o <outdir> [<optional>]
+bash simulated_data.py -o <outdir> [<optional>]
 ```
 
 Check all available options with:
 ```bash
-bash simulate_data.sh -h
+bash simulated_data.py -h
 ```
 
-Alternatively, you can only generate the simulated data by calling the Python script directly:
-
+Commonly used parameters (default values are recommended unless otherwise specified):
 ```bash
 python simulated_data.py \
     --total_dmr 1000 \
@@ -295,48 +295,54 @@ python simulated_data.py \
 
 ### Parameter
 
+| Parameter                 | Required | Description                                        | Default    |
+| ------------------------- | -------- | -------------------------------------------------- | ---------- |
+| `-o, --output_dir`        | ✅        | Output directory for simulation results            | `./out`    |
+| `-t, --total_dmr`         | ❌        | Total number of simulated regions                  | `100`      |
+| `-d, --mean_delta`        | ❌        | Target mean methylation difference (± allowed)     | `0.3`      |
+| `-c, --n_control`         | ❌        | Number of control samples                          | `5`        |
+| `-e, --n_treatment`       | ❌        | Number of treatment samples                        | `5`        |
+| `-m, --coverage_mean`     | ❌        | Mean sequencing coverage per CpG                   | `30`       |
+| `-s, --coverage_std`      | ❌        | Standard deviation of CpG coverage                 | `5`        |
+| `-r, --chr_name`          | ❌        | Chromosome name                                    | `chr1`     |
+| `-p, --start_pos`         | ❌        | Start genomic coordinate for simulation            | `10000`    |
+| `-l, --length_mean`       | ❌        | Mean DMR length (bp)                               | `1000`     |
+| `-z, --length_std`        | ❌        | Standard deviation of DMR length (bp)              | `100`      |
+| `-x, --max_cpgs`          | ❌        | Maximum number of CpGs per region (hard cap)       | `500`      |
+| `-y, --density`           | ❌        | CpG density mode: `dense` / `moderate` / `sparse`  | `moderate` |
+| `-q, --dmr_per`           | ❌        | Proportion of good-DMR regions                     | `0.25`     |
+| `-n, --dmr_notable_per`   | ❌        | Proportion of notable-DMR regions                  | `0.02`      |
+| `-i, --dmr_inconsis_per`  | ❌        | Proportion of inconsistent-DMR regions             | `0.03`      |
+| `-u, --dmr_sub_per`       | ❌        | Proportion of sub-DMR regions                      | `0.05`      |
+| `-cm, --dmr_missing_max`  | ❌        | Maximum CpG-level missing rate within a DMR        | `0.1`      |
+| `-sm,--sample_missing_max`| ❌        | Maximum sample-level missing rate within a group   | `0.1`      |
+| `-nd,--no_delta_methylation`| ❌        | Mean methylation difference for non-DMR regions    | `0.08`     |
+| `-mn, --min_gap`          | ❌        | Minimum inter-region gap along the chromosome (bp) | `10`       |
+| `-mx, --max_gap`          | ❌        | Maximum inter-region gap along the chromosome (bp) | `50`       |
+| `-S, --seed`              | ❌        | Random seed for reproducibility                    | `42`       |
+| `-h, --help`              | ❌        | Show help message and exit                         | –          |
 
-| Parameter | Required | Description | Default |
-|-----------|----------|-------------|---------|
-| `-o, --output_dir` | ✅ | Output directory | `./output` |
-| `-t, --total_dmr` | ❌ | Total number of simulated DMRs | `10000` |
-| `-d, --mean_delta` | ❌ | Mean methylation delta | `0.25` |
-| `-c, --n_control` | ❌ | Number of control samples | `10` |
-| `-e, --n_treatment` | ❌ | Number of treatment samples | `10` |
-| `-m, --coverage_mean` | ❌ | Mean coverage depth | `30` |
-| `-s, --coverage_std` | ❌ | Coverage standard deviation | `5` |
-| `-r, --chr_name` | ❌ | Chromosome name | `chr1` |
-| `-p, --start_pos` | ❌ | Start position for DMR simulation | `100000` |
-| `-l, --length_mean` | ❌ | Mean DMR length | `1000` |
-| `-z, --length_std` | ❌ | Standard deviation of DMR length | `100` |
-| `-x, --max_cpgs` | ❌ | Maximum CpGs per DMR | `100` |
-| `-q, --dmr_per` | ❌ | Proportion of good DMRs | `0.19` |
-| `-n, --dmr_notable_per` | ❌ | Proportion of notable DMRs | `0.01` |
-| `-i, --dmr_inconsis_per` | ❌ | Proportion of inconsistent DMRs | `0` |
-| `-u, --dmr_sub_per` | ❌ | Proportion of sub DMRs | `0` |
-| `-y, --density` | ❌ | Density mode: `mix` / `dense` / `sparse` | `mix` |
-| `-a, --dense_ratio` | ❌ | Ratio of dense regions | `0.5`|
-| `-S, --seed` | ❌ | Random seed | `42` |
-| `-T, --threads` | ❌ | Number of threads for cyberDMR | `1` |
-| `-h, --help` | ❌ | Show help message and exit | – |
+**Note**: Parameters not listed above are considered advanced/internal and generally do not require adjustment for typical simulation use cases.
 
 ---
 
 ## 8. Demo:
 
 We provide a `demo/` folder containing example input files and expected results.  
-Users can quickly test the workflow with the following commands:
+Users can quickly test the workflow using the script `script/run_simulation_cyberDMR.sh`.  
+Please specify the path to the cyberDMR root directory so that all required scripts can be correctly located.  
+The basic command is shown below:
 
-
+### View help
 ```bash
-# Run simulated data generation
-bash simulate_data.sh -o ./demo/simulate_data -t 100
+bash run_simulation_cyberDMR.sh -h
 ```
 
+### Basic usage example
 ```bash
-# Run cyberDMR on the demo input
-bash cyberDMR.sh -i ./demo/input -o ./demo/output -g1 lethal -g2 normal -q 0.01
+bash run_simulation_cyberDMR.sh --root $(pwd) -o ./demo
 ```
+
 
 ## 9. Release Notes
 ### Release Notes – cyberDMR v1.0
@@ -351,7 +357,7 @@ bash cyberDMR.sh -i ./demo/input -o ./demo/output -g1 lethal -g2 normal -q 0.01
 - Expanded usage instructions and added demo.
 
 ### Release Notes - cyberDMR v1.2
-**Release Date:** 2025-09-12
+**Release Date:** 2025-12-17
 **Status:** Feature update
 - Refactored the cyberDMR codebase into a unified and streamlined framework.
 - Integrated population-level (pDMR) and haplotype-resolved (hDMR) detection results derived from ONT long-read methylation datasets.
