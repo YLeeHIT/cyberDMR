@@ -175,4 +175,10 @@ cython_debug/
 
 # local data and libraries
 lib/
-
+local/
+old_version/
+hDMR/
+filling_WGBS_prostate/
+WGBS_prostate/
+ONT_GIAB/
+remove/
