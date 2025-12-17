@@ -1,0 +1,24 @@
+# Simulation Parameters Log
+Time: 2025-12-04 19:37:47
+
+Chromosome: chr1
+Start position: 100000
+Total simulated regions: 998
+ - good-DMR: 250 (0.25 of all DMRs)
+ - inconsistent-DMR: 30 (0.03 of all DMRs)
+ - sub-DMR: 50 (0.05 of all DMRs)
+ - notable-DMR: 20 (0.02 of all DMRs)
+ - non-DMR: 648
+
+DMR density mode: moderate
+Region length: N(mean=1000 bp, std=100 bp)
+Max CpGs per region: 200
+CpG distance : 10 ~ 50 bp
+Sample missing: 0.1
+CpG missing: 0.1
+Delta methylation mean: 0.25
+Control group samples: 25
+Treatment group samples: 25
+Coverage mean: 30
+Coverage std: 5
+Random seed: 101

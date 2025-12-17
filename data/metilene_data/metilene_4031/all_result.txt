@@ -1,7 +1,0 @@
-ID	TP	FP	FN	Precision	Recall	F1-score	detectDMR	TrueDMR	Tool
-metilene_4031	996	1	4	0.9989	0.9960	0.9974	1000	987	cyberDMR
-metilene_4031	817	2	183	0.9975	0.8170	0.8982	1000	803	metilene
-metilene_4031	980	48	20	0.9533	0.9800	0.9664	1000	969	BSmooth
-metilene_4031	986	0	14	1.0000	0.9860	0.9929	1000	932	HOME
-metilene_4031	1000	0	0	1.0000	1.0000	1.0000	1000	994	methylasso
-metilene_4031	1000	9	0	0.9910	1.0000	0.9954	1000	960	DiffMethylTools
