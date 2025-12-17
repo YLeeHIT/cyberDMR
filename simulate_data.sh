@@ -8,28 +8,52 @@
 # -------------------------------
 # Default parameters
 # -------------------------------
-total_dmr=10000
+total_dmr=1000
 mean_delta=0.25
 n_control=10
 n_treatment=10
 coverage_mean=30
 coverage_std=5
-output_dir="./output"
+output_dir="$(pwd)/output"
 chr_name="chr1"
 start_pos=100000
 length_mean=1000
 length_std=100
-max_cpgs=100
-dmr_per=0.19
-dmr_notable_per=0.01
-dmr_inconsis_per=0
-dmr_sub_per=0
-density="mix"
-dense_ratio=0.5
+max_cpgs=200
+dmr_per=0.25
+dmr_notable_per=0.02
+dmr_inconsis_per=0.03
+dmr_sub_per=0.05
+density="moderate"
+min_gap=10
+max_gap=50
+sample_missing_ratio=0.1
+cpg_missing_ratio=0.1
+good_precision=20
+bad_precision=20
+no_delta_methylation=0.08
+attempt_per_slot=200
 seed=42
 threads=1
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -n "${CYBERDMR_HOME:-}" && -d "$CYBERDMR_HOME"   ]]; then
+    SCRIPT_DIR="$CYBERDMR_HOME"
+elif [[ -n "${SLURM_SUBMIT_DIR:-}" && -d "$SLURM_SUBMIT_DIR"   ]]; then
+    SCRIPT_DIR="$SLURM_SUBMIT_DIR"
+else
+    _src="${BASH_SOURCE[0]:-${0}}"
+    while [ -L "$_src"   ]; do
+        _dir="$(cd -P "$(dirname "$_src")" && pwd)"
+        _src="$(readlink "$_src")"
+        [[ "$_src" != /*   ]] && _src="$_dir/$_src"
+    done
+    SCRIPT_DIR="$(cd -P "$(dirname "$_src")" && pwd)"
+fi
+
+echo "[INFO] SLURM_SUBMIT_DIR = ${SLURM_SUBMIT_DIR:-N/A}"
+echo "[INFO] SCRIPT_DIR       = ${SCRIPT_DIR}"
+
 simulate_py="${SCRIPT_DIR}/script/simulated_data.py"
 merge_sh="${SCRIPT_DIR}/script/merge_simulated_samples.sh"
 
@@ -38,7 +62,6 @@ merge_sh="${SCRIPT_DIR}/script/merge_simulated_samples.sh"
 # -------------------------------
 print_help() {
     echo "Usage: bash $0 [options]"
-    echo ""
     echo "Options:"
     echo " -t, --total_dmr NUM Total number of simulated DMRs (default: $total_dmr)"
     echo " -d, --mean_delta NUM Mean methylation delta (default: $mean_delta)"
@@ -56,11 +79,20 @@ print_help() {
     echo " -n, --dmr_notable_per NUM Proportion of notable DMRs (default: $dmr_notable_per)"
     echo " -i, --dmr_inconsis_per NUM Proportion of inconsistent DMRs (default: $dmr_inconsis_per)"
     echo " -u, --dmr_sub_per NUM Proportion of sub DMRs (default: $dmr_sub_per)"
-    echo " -y, --density STR Density mode: mix / dense / sparse (default: $density)"
-    echo " -a, --dense_ratio NUM Ratio of dense regions (default: $dense_ratio)"
+    echo " -y, --density STR Density mode: dense/ moderate / sparse (default: $density)"
+    echo " -mn, --min_gap NUM Min distance between two cpgs (default: $min_gap)"
+    echo " -mx, --max_gap NUM Max distance between two cpgs (default: $max_gap)"
+    echo " -sm, --sample_missing NUM Missing ratio of samples (default: $sample_missing_ratio)"
+    echo " -cm, --cpg_missing NUM Missing ratio of cpgs (default: $cpg_missing_ratio)"
+    echo " -gp, --good_precisoin NUM Parameter of precision in Beta(alpha, beta) model for good-DMR (default: $good_precision)"
+    echo " -bp, --bad_precisoin NUM Parameter of precision in Beta(alpha, beta) model for non-DMR (default: $bad_precision)"
+    echo " -nd, --no_delta_methylation Methylation delta for non-DMR (default: $no_delta_methylation)"
+    echo " -a, --attempt_per_slot NUM Max attempts for generating a region of a given class before skipping (default: $attempt_per_slot)"
     echo " -S, --seed NUM Random seed (default: $seed)"
     echo " -T, --threads NUM Number of threads for cyberDMR (default: $threads)"
     echo " -h, --help Show this help message and exit"
+    echo "Example:"
+    echo " bash $0 -o $(pwd)/test -t 100"
     exit 0
 }
 
@@ -86,7 +118,14 @@ while [[ $# -gt 0 ]]; do
         -i|--dmr_inconsis_per) dmr_inconsis_per="$2"; shift 2 ;;
         -u|--dmr_sub_per) dmr_sub_per="$2"; shift 2 ;;
         -y|--density) density="$2"; shift 2 ;;
-        -a|--dense_ratio) dense_ratio="$2"; shift 2 ;;
+        -mn|--min_gap) min_gap="$2"; shift 2 ;;
+        -mx|--mix_gap) max_gap="$2"; shift 2 ;;
+        -sm|--sample_missing) sample_missing_ratio="$2"; shift 2 ;;
+        -cm|--cpg_missing) cpg_missing_ratio="$2"; shift 2 ;;
+        -gp|--good_precision) good_precision="$2"; shift 2 ;;
+        -bp|--bad_precision) bad_precision="$2"; shift 2 ;;
+        -nd|--no_delta_methylation) no_delta_methylation="$2"; shift 2 ;;
+        -a|--attempt_per_slot) attempt_per_slot="$2"; shift 2 ;;
         -S|--seed) seed="$2"; shift 2 ;;
         -h|--help) print_help ;;
         *) echo "[ERROR] Unkown parameter: $1"; print_help ;;
@@ -115,13 +154,39 @@ python "${simulate_py}" \
     --dmr_inconsis_per "$dmr_inconsis_per" \
     --dmr_sub_per "$dmr_sub_per" \
     --density "$density" \
-    --dense_ratio "$dense_ratio" \
+    --min_gap "$min_gap" \
+    --max_gap "$max_gap" \
+    --sample_missing_max "$sample_missing_ratio" \
+    --dmr_missing_max "$cpg_missing_ratio" \
+    --good_precision "$good_precision" \
+    --no_precision "$bad_precision" \
+    --no_delta_methylation "$no_delta_methylation" \
+    --max_attempts_per_slot "$attempt_per_slot" \
     --seed "$seed"
 
 # -------------------------------
 # Step 2: Merge and convert
 # -------------------------------
+extract_sh="/home/user/liyang/project/methDmr/scripts/extract_DMR.sh"
 echo "Step 2: Merge data and convert format"
 bash ${merge_sh} ${output_dir}
+DMR_file="${output_dir}/DMRs.txt"
+bash ${extract_sh} ${DMR_file} ${output_dir}
 
-echo "[INFO] All processes has finished"
+# -------------------------------
+# Step 3: Detect DMR
+# -------------------------------
+detect_sh="/home/user/liyang/project/methDmr/scripts/detect_DMR.sh"
+echo "Step Three: Detect DMRs"
+#fvalue=500000
+bash ${detect_sh} ${output_dir} ${chr_name} ${threads} all
+
+# -------------------------------
+# Step 4: Integrate result
+# -------------------------------
+integrate_sh="/home/user/liyang/project/methDmr/scripts/integrate_data.sh"
+echo "Step Four: Integrate result"
+bash ${integrate_sh} ${output_dir}
+
+echo "[INFO] All process has finished"
+

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Example:
-#	bash ./merage_simulated_samples.sh ../data/simulate_data
+#	bash ./merge_simulated_samples.sh ../data/simulate_data
 
 output_dir=$1
 format=$2

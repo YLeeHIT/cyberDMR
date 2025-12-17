@@ -107,11 +107,29 @@ outdir="$(readlink -f "$outdir")"
 # -----------------------------
 # Resolve paths
 # -----------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+#cyberDMR_py="${SCRIPT_DIR}/lib/cyberDMR.py"
+
+if [[ -n "${CYBERDMR_HOME:-}" && -d "$CYBERDMR_HOME"  ]]; then
+    SCRIPT_DIR="$CYBERDMR_HOME"
+elif [[ -n "${SLURM_SUBMIT_DIR:-}" && -d "$SLURM_SUBMIT_DIR"  ]]; then
+    SCRIPT_DIR="$SLURM_SUBMIT_DIR"
+else
+    _src="${BASH_SOURCE[0]:-${0}}"
+    while [ -L "$_src"  ]; do
+        _dir="$(cd -P "$(dirname "$_src")" && pwd)"
+        _src="$(readlink "$_src")"
+        [[ "$_src" != /*  ]] && _src="$_dir/$_src"
+    done
+    SCRIPT_DIR="$(cd -P "$(dirname "$_src")" && pwd)"
+fi
+
 cyberDMR_py="${SCRIPT_DIR}/lib/cyberDMR.py"
 
-echo "[INFO] SCRIPT_DIR = ${SCRIPT_DIR}"
-echo "[INFO] cyberDMR.py = ${cyberDMR_py}"
+echo "[INFO] SLURM_SUBMIT_DIR = ${SLURM_SUBMIT_DIR:-N/A}"
+echo "[INFO] SCRIPT_DIR       = ${SCRIPT_DIR}"
+echo "[INFO] cyberDMR.py      = ${cyberDMR_py}"
+
 
 # -----------------------------
 # Prepare output dir
