@@ -56,15 +56,15 @@ pip install -r requirements.txt
 
 ```bash
 ### Run with input file path
-bash cyberDMR.sh --in-dir <indir> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
+python cyberDMR.py --in-dir <indir> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
 
 ### Run with a file that contains input file paths
-bash cyberDMR.sh -lab <lab.txt> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
+python cyberDMR.py -lab <lab.txt> --out-dir <outdir> --group1 <group1> --group2 <group2> [<optional>]
 ```
 
 Check all available options with:
 ```bash
-bash cyberDMR.sh --help
+python cyberDMR.py --help
 ```
 
 For detailed parameter descriptions, see [4. Arguments](#4-arguments).
@@ -89,7 +89,7 @@ For usage examples, [8. Demo](#8-demo)
 | `-cov, --min-cov`       | ❌        | Minimum CpG coverage to retain            | `5`                    |
 | `-fdis, --max-dist`     | ❌        | Maximum distance of adjacent CpGs         | `500`                  |
 | `-q, --qvalue`          | ❌        | BH-corrected p-value threshold            | `0.05`                 |
-| `-f, --Fvalue`          | ❌        | F statistic threshold                     | `15`                   |
+| `-f, --Fvalue`          | ❌        | F statistic threshold                     | `1550`                   |
 
 \* One of `--in-dir` or `--cyber-lab` must be provided.
 
@@ -340,23 +340,24 @@ bash cyberDMR.sh -i ./demo/input -o ./demo/output -g1 lethal -g2 normal -q 0.01
 ```
 
 ## 9. Release Notes
-
 ### Release Notes – cyberDMR v1.0
-
 **Release Date:** 2025-05-13
 **Status:** Initial release
 
 ### Release Notes – cyberDMR v1.1
-
 **Release Date:** 2025-09-12
-**Status:** Initial release
-
+**Status:** Feature update
 - Fixed the "Maximum Likelihood optimization failed" error in certain edge cases during model fitting.
 - Added simulated datasets for multiple scenarios to demonstrate tool behavior under different conditions.
 - Expanded usage instructions and added demo.
 
-If you use **cyberDMR** in your research, please cite the following paper:
+### Release Notes - cyberDMR v1.2
+**Release Date:** 2025-09-12
+**Status:** Feature update
+- Refactored the cyberDMR codebase into a unified and streamlined framework.
+- Integrated population-level (pDMR) and haplotype-resolved (hDMR) detection results derived from ONT long-read methylation datasets.
 
+If you use **cyberDMR** in your research, please cite the following paper:
 > **Li, Yang**, *et al.*
 > **cyberDMR: accurate and robust identification of differentially methylated regions from WGS-derived methylomes**
 > *BMC Biology*, 2025 (under review)
