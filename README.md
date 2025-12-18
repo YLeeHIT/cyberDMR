@@ -338,7 +338,7 @@ bash run_simulation_cyberDMR.sh -h
 
 ### Basic usage example
 ```bash
-bash run_simulation_cyberDMR.sh --root $(pwd) -o ./demo
+bash script/run_simulation_cyberDMR.sh -root $(pwd) -o ./demo
 ```
 
 

@@ -42,7 +42,7 @@ threads=1
 print_help() {
     echo "Usage: bash $0 --root <cyberDMR PATH> [options]"
     echo "Required:"
-    echo "--root ROOTDIR The path of cyberDMR project"
+    echo "-root ROOTDIR The path of cyberDMR project"
     echo "Options:"
     echo " -t, --total_dmr NUM Total number of simulated DMRs (default: $total_dmr)"
     echo " -d, --mean_delta NUM Mean methylation delta (default: $mean_delta)"
@@ -73,7 +73,7 @@ print_help() {
     echo " -T, --threads NUM Number of threads for cyberDMR (default: $threads)"
     echo " -h, --help Show this help message and exit"
     echo "Example:"
-    echo " cd cyberDMR; bash ./scripts/$0 --root $(pwd) -o $(pwd)/test"
+    echo " cd cyberDMR; bash ./scripts/$0 -root $(pwd) -o $(pwd)/demo"
     exit 0
 }
 
