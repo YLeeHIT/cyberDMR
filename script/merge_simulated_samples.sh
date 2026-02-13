@@ -6,7 +6,7 @@ output_dir=$1
 format=$2
 
 if [[ -z "$output_dir" ]]; then
-	echo "Usage: $0 <indir> [format: cyberDMR |HOME |Metilene |BSmooth]"
+	echo "Usage: $0 <indir> [format: cyberDMR |HOME |Metilene |BSmooth |DSS]"
 	exit 1
 fi
 result_dir="${output_dir}/result"
@@ -25,7 +25,7 @@ for sample in ${sample_names}; do
 done
 echo -e "All samples has finished"
 
-all_formats=("cyberDMR" "HOME" "Metilene" "BSmooth" "MethyLasso" "DiffMethylTools")
+all_formats=("cyberDMR" "HOME" "Metilene" "BSmooth" "MethyLasso" "DiffMethylTools" "DSS")
 
 if [[ -n "$format" ]]; then
 	formats=("$format")
@@ -76,6 +76,12 @@ for format in "${formats[@]}"; do
 			#echo -e "Doing DiffMethylTools"
             cp "$file" "${outfile}"
 			grep -vwh "coverage" "$outfile" > "${outfile_noheader}"
+            rm "$outfile"
+        elif [[ "$format" == "DSS"  ]]; then
+            #echo -e "Doing DSS"
+            echo -e "chr\tstart\tN\tX" > "$outfile"
+            awk 'NR>1 {print $1"\t"$2"\t"$4"\t"int($4*$5)}' "$file"  >> "$outfile"
+            grep -vwh "start" "$outfile" > "${outfile_noheader}"
             rm "$outfile"
 		else
 			echo "ERROR: Format is wrong"
