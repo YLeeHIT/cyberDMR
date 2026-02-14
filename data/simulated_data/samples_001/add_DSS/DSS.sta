@@ -1,0 +1,16 @@
+ID	samples_001
+Tool	DSS
+TP	281
+FP	7
+FN	19
+TN	693
+Precision	0.9756
+Recall	0.9366
+F1-score	0.9556
+detectDMR	282
+allDMR	1000
+trueDMR	300
+goodDMR	237
+subDMR	44
+inconDMR	7
+notaDMR	7
