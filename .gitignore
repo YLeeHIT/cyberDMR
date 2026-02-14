@@ -183,3 +183,6 @@ WGBS_prostate/
 ONT_GIAB/
 remove/
 .vscode/
+slurm/
+tmp/
+response_exp/

@@ -26,8 +26,8 @@
 
 ## 1. Introduction
 - **cyberDMR** is an accurate and robust approach for differentially methylated regions (DMRs) detection.
-- This tool is applicable to second-generation methylation sequencing data (e.g., WGBS, RRBS, and other targeted methylation sequencing approaches) and third-generation platforms (e.g., ONT and PacBio), whereas array-based data (e.g., 450K or EPIC) need to be converted into the standard cyberDMR input format by the user.
-
+- **cyberDMR** is applicable to second-generation methylation sequencing data (e.g., WGBS, RRBS, and other targeted methylation sequencing approaches) and third-generation platforms (e.g., ONT and PacBio), whereas array-based data (e.g., 450K or EPIC) need to be converted into the standard cyberDMR input format by the user.
+- **cyberDMR** has been systematically tested on the human genome and shows stable performance. Its use on other species is not recommended at this stage, as it has not yet been thoroughly validated.
 ### Features
 
 #### Weighted smoothing for low-coverage CpGs

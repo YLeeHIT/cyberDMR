@@ -77,7 +77,7 @@ for format in "${formats[@]}"; do
             cp "$file" "${outfile}"
 			grep -vwh "coverage" "$outfile" > "${outfile_noheader}"
             rm "$outfile"
-        elif [[ "$format" == "DSS"  ]]; then
+        elif [[ "$format" == "DSS" ]]; then
             #echo -e "Doing DSS"
             echo -e "chr\tstart\tN\tX" > "$outfile"
             awk 'NR>1 {print $1"\t"$2"\t"$4"\t"int($4*$5)}' "$file"  >> "$outfile"
