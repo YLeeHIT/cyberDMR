@@ -344,9 +344,15 @@ bash script/run_simulation_cyberDMR.sh -root $(pwd) -o ./demo
 
 
 ## 9. Release Notes
-### Release Notes – cyberDMR v1.0
-**Release Date:** 2025-05-13
-**Status:** Initial release
+### Release Notes - cyberDMR v1.2
+**Release Date:** 2025-12-17
+**Status:** Feature update
+- Refactored the cyberDMR codebase into a unified and streamlined framework.
+- Integrated population-level (pDMR) and haplotype-resolved (hDMR) detection results derived from ONT long-read methylation datasets.
+
+**Update Date:** 2026-02-20
+- Added an extended description of the applicability of **cyberDMR**, clarifying its compatibility with multiple methylation sequencing platforms (including WGBS, RRBS, targeted methylation sequencing, and long-read ONT/PacBio data).
+- Incorporated benchmarking results comparing **cyberDMR** with **DSS**, including accuracy metrics and computational performance evaluation.
 
 ### Release Notes – cyberDMR v1.1
 **Release Date:** 2025-09-12
@@ -355,11 +361,9 @@ bash script/run_simulation_cyberDMR.sh -root $(pwd) -o ./demo
 - Added simulated datasets for multiple scenarios to demonstrate tool behavior under different conditions.
 - Expanded usage instructions and added demo.
 
-### Release Notes - cyberDMR v1.2
-**Release Date:** 2025-12-17
-**Status:** Feature update
-- Refactored the cyberDMR codebase into a unified and streamlined framework.
-- Integrated population-level (pDMR) and haplotype-resolved (hDMR) detection results derived from ONT long-read methylation datasets.
+### Release Notes – cyberDMR v1.0
+**Release Date:** 2025-05-13
+**Status:** Initial release
 
 If you use **cyberDMR** in your research, please cite the following paper:
 > **Li, Yang**, *et al.*
