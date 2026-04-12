@@ -354,6 +354,9 @@ bash script/run_simulation_cyberDMR.sh -root $(pwd) -o ./demo
 - Added an extended description of the applicability of **cyberDMR**, clarifying its compatibility with multiple methylation sequencing platforms (including WGBS, RRBS, targeted methylation sequencing, and long-read ONT/PacBio data).
 - Incorporated benchmarking results comparing **cyberDMR** with **DSS**, including accuracy metrics and computational performance evaluation.
 
+**Update Date:** 2026-04-12  
+- Fixed an issue where incorrect DMR results were generated when the `-d` (delta) threshold was set below `0.1`.  
+
 ### Release Notes – cyberDMR v1.1
 **Release Date:** 2025-09-12
 **Status:** Feature update
