@@ -445,7 +445,17 @@ def find_blocks_greedy(out_data, delta_m_mean_threshold=0.1, min_cpg_count=5, al
                 block_data.loc[list(block), block_col] = new_block_name
                 sub_block = block_data.loc[list(block)]
                 block_results.append(sub_block)
-                wbr_result = run_weighted_beta_regression(sub_block, group1=group1, group2=group2, f_value=Fvalue)
+                block_delta_mean = total_delta_m / block_size
+                
+                wbr_result = run_weighted_beta_regression(
+                        sub_block,
+                        group1=group1,
+                        group2=group2,
+                        f_value=Fvalue,
+                        delta_threshold=delta_m_mean_threshold,
+                        block_delta_mean=block_delta_mean   
+                )
+                #wbr_result = run_weighted_beta_regression(sub_block, group1=group1, group2=group2, f_value=Fvalue)
 
                 if wbr_result['DMR']:            
                     dmr_summary.append([
@@ -664,7 +674,7 @@ class SafeLogit(sm.families.links.Logit):
         return super().inverse(z)
 
 
-def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_value=1e5):
+def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_value=1e5, delta_threshold=None, block_delta_mean=None):
     df_summary_long = prepare_summary_for_merge(df_summary, group1=group1, group2=group2)
     df_weights = df_weights.merge(
         df_summary_long[["Chr_Pos", "Group", "mean"]],
@@ -720,12 +730,14 @@ def mle_beta_regression(df_weights, df_summary, group1="g1", group2="g2", f_valu
             mu_T = expit(beta_0 + beta_1) if np.isfinite(beta_0 + beta_1) else np.nan
             delta_mu = (mu_C - mu_T) if (np.isfinite(mu_T) and np.isfinite(mu_C)) else np.nan
             
-            if delta_mu > 0 and delta_mu < 0.1:
-                delta_mu = 0.1001
-            elif delta_mu < 0 and delta_mu > -0.1:
-                delta_mu = -0.1001
-            else:
-                delta_mu = delta_mu
+            if (delta_threshold is not None) and (block_delta_mean is not None) and np.isfinite(delta_mu):
+                if abs(delta_mu) < delta_threshold:
+                    if delta_mu >= 0:
+                        delta_mu = abs(block_delta_mean)
+                    else:
+                        delta_mu = -abs(block_delta_mean)
+                else:
+                    delta_mu = delta_mu
 
             try:
                 with warnings.catch_warnings():
@@ -870,7 +882,7 @@ def compute_dmr_f_statistic_single_sample(
     return out
 
 
-def run_weighted_beta_regression(df_summary, group1="g1", group2="g2", f_value=15):
+def run_weighted_beta_regression(df_summary, group1="g1", group2="g2", f_value=15, delta_threshold=0.1, block_delta_mean=None):
     """
     Run WBR weighted Beta regression, with the option to choose either WLS (Weighted Least Squares) or MLE (Maximum Likelihood Estimation) Beta regression
     Automatically infer group1_size and group2_size from df_summary
@@ -881,7 +893,7 @@ def run_weighted_beta_regression(df_summary, group1="g1", group2="g2", f_value=1
     df_weights = compute_weights(df_beta, df_summary, group1=group1, group2=group2)
 
     # Calculate the F-statistic
-    p_value, delta_mu, g1_beta, g2_beta, F_stat, pro_var= mle_beta_regression(df_weights, df_summary, group1=group1, group2=group2, f_value=f_value)
+    p_value, delta_mu, g1_beta, g2_beta, F_stat, pro_var= mle_beta_regression(df_weights, df_summary, group1=group1, group2=group2, f_value=f_value, delta_threshold=delta_threshold, block_delta_mean=block_delta_mean)
     is_DMR = (p_value < 0.05) and (F_stat > f_value)
     
     return {
