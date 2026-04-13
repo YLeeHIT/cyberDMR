@@ -2,7 +2,7 @@
     <img src="figure/cyberDMR_logo.png" alt="cyberDMR logo", width="300"/>
 </div >
 
-![Version](https://img.shields.io/badge/version-1.1-blue)
+![Version](https://img.shields.io/badge/version-1.2.1-blue)
 ![Language](https://img.shields.io/badge/language-python-blue)
 ![Language](https://img.shields.io/badge/language-shell-4EAA25)
 ![License](https://img.shields.io/badge/license-MIT-green)
